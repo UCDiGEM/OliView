@@ -389,8 +389,6 @@ void MainWindow::sampPAPressed()
 
 }
 
-
-
 /*************************************************************************************************************/
 /***************************** READ DATA FROM SERIAL PORT AND GRAPH THE VALUES *******************************/
 /*************************************************************************************************************/
@@ -421,7 +419,6 @@ void MainWindow::preParse() {
         QTimer::singleShot(samples*1000/sampleRate, this, SLOT(parseAndPlot()));
     }
 }
-
 
 void MainWindow::parseAndPlot()
 {
