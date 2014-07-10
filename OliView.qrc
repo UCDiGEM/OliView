@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/Images">
+        <file>SineWave.png</file>
+        <file>SquareWave.png</file>
+        <file>TriangleWave.png</file>
+    </qresource>
+</RCC>
