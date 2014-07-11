@@ -92,7 +92,7 @@ private:
     int waveNum;
     selectport *myPort;
   //  QSerialPort *serial;
-   QString portname;
+   QString portname="null";
 
 
 };

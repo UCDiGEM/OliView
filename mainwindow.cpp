@@ -44,6 +44,7 @@
 #include <QSerialPortInfo>
 #include "selectport.h"
 #include "ui_selectport.h"
+#include <QMessageBox>
 
 QSerialPort serial;
 
@@ -66,14 +67,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
+
     connect(ui->menu_Select_Port, SIGNAL(triggered()), this, SLOT(openSerialPicker()));
-    //serial = new QSerialPort(this);
     connect(myPort,SIGNAL(portSignal(QString)),this,SLOT(setUpComPort(QString)));
 
-    //fillPortsInfo();
 
     setupAldeSensGraph(ui->customPlot);
-    
     setupWaveTypes();
     
     connect(ui->sampButtonCV, SIGNAL(clicked()), this, SLOT(sampCVPressed()));
@@ -131,27 +130,18 @@ void MainWindow::setUpComPort(QString currentName)
 //QString *OS=new QString("Linux");
 //#endif
 //#ifdef Q_WS_WIN
-//    OS= QString("Windows");
+//   QString *OS= QString("Windows");
 //#endif
 //#ifdef Q_WS_MACX
-//    OS= QString("Mac");
+//    QString *OS= QString("Mac");
 //#endif
 
-//if(OS=="Windows")
-//{
-//    const QString pname=myPort->currentName();
-//}
-//else if(OS=="Mac"){
-    portname="\\dev\\tty."+currentName;
-//}
-    qDebug() << "port name"<<currentName;
+   portname="/dev/tty."+currentName;
 
-        qDebug()<<"current name" <<portname;
+    qDebug()<<"current name" <<portname;
         serial.setPortName(portname);
-   // serial.setPortName("\dev\tty.usbmodem442291");
     if (serial.open(QIODevice::ReadWrite))
     {
-        qDebug() <<"hi";
         serial.setBaudRate(QSerialPort::Baud9600);
         serial.setDataBits(QSerialPort::Data8);
         serial.setParity(QSerialPort::NoParity);
@@ -178,12 +168,6 @@ void MainWindow::openSerialPicker() {
     myPort->show();
     myPort->raise();
     myPort->activateWindow();
-
-
-    //portName = ui->DateScroll->date();
-    //myPicker->helpPaint(todayDate);
-
- //   connect(selectPort, SIGNAL(choosePort(QString)), this, SLOT(updatePort(QString)));
 }
 
 /*************************************************************************************************************/
@@ -384,16 +368,23 @@ void MainWindow::waveType()
 
 void MainWindow::sampASPressed()
 {
-    QString ASsv = QString::number(ui->ASstartVolt->value(),'f',2);
-    QString ASpv = QString::number(ui->ASpeakVolt->value(),'f',2);
-    QString ASsr = QString::number(ui->ASscanRate->value());
-    QString wave = QString::number(waveNum);
+    if(portname=="null")
+    {
+        QMessageBox::warning(this,"Warning","CHOOSE YOUR SERIALPORT FIRST!");
+        openSerialPicker();
+    }
+    else
+    {
+        QString ASsv = QString::number(ui->ASstartVolt->value(),'f',2);
+        QString ASpv = QString::number(ui->ASpeakVolt->value(),'f',2);
+        QString ASsr = QString::number(ui->ASscanRate->value());
+        QString wave = QString::number(waveNum);
 
-    QString mainInstructions = ("anoStrip!"+ASsv+"@"+ASpv+"#"+ASsr+"$"+wave+"%");
-    serial.write(mainInstructions.toStdString().c_str());
+        QString mainInstructions = ("anoStrip!"+ASsv+"@"+ASpv+"#"+ASsr+"$"+wave+"%");
+        serial.write(mainInstructions.toStdString().c_str());
 
-    QTimer::singleShot(140, this, SLOT(preParse()));
-
+        QTimer::singleShot(140, this, SLOT(preParse()));
+    }
     //ui->sampButton->setText(QString("Resample"));
 }
 
@@ -403,7 +394,15 @@ void MainWindow::sampASPressed()
 
 void MainWindow::sampCVPressed()
 {
-    //setUpComPort();
+
+    if(portname=="null")
+    {
+        QMessageBox::warning(this,"Warning","CHOOSE YOUR SERIALPORT FIRST!");
+        openSerialPicker();
+    }
+    else
+    {
+
     QString CVsv = QString::number(ui->CVstartVolt->value(),'f',2);
     QString CVpv = QString::number(ui->CVpeakVolt->value(),'f',2);
     QString CVsr = QString::number(ui->CVscanRate->value());
@@ -412,14 +411,23 @@ void MainWindow::sampCVPressed()
     serial.write(mainInstructions.toStdString().c_str());
 
     QTimer::singleShot(140, this, SLOT(preParse()));;
-
+    }
 }
 
 //-------------------------------------------------------------------------------------------Potentiostatic Amperometry
 
 void MainWindow::sampPAPressed()
 {
-    //setUpComPort();
+
+    if(portname=="null")
+    {
+        QMessageBox::warning(this,"Warning","CHOOSE YOUR SERIALPORT FIRST!");
+        openSerialPicker();
+
+    }
+    else
+    {
+
     QString PApv = QString::number(ui->PApotVolt->value(),'f',2);
     QString PAst = QString::number(ui->PAsampTime->value(),'f',2);
 
@@ -429,7 +437,7 @@ void MainWindow::sampPAPressed()
     qDebug() << mainInstructions;
 
     QTimer::singleShot(140, this, SLOT(preParse()));
-
+    }
 }
 
 /*************************************************************************************************************/
@@ -465,7 +473,6 @@ void MainWindow::preParse() {
 
 void MainWindow::parseAndPlot()
 {
-//setUpComPort();
     QString inByteArray;
     QString firstFiveDump;
 
@@ -622,7 +629,6 @@ void MainWindow::resetAxis()
     ui->customPlot->replot();
 
     //serial.close();
-    //
 }
 
 //-------------------------------------------------------------------------------------------Functionality of Clear All
