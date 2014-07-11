@@ -244,12 +244,13 @@ void anoStrip() {
 //
 
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
-  int samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
+  int samples = round(sampTime * sampleRateFloat+0.5); // With delay of 0.5 ms, 2000 samples per second
 
   Serial.println(samples);                                            //samples
   double voltDiv = scanRate/(1000.0*sampleRateFloat);
+  int flipSample = round(samples/2+0.5);
   Serial.println(voltDiv,6);   //voltDiv
-  Serial.println(startVolt,6);
+  Serial.println(flipSample);
   while (usec < 20); // wait
   usec = usec - 20;
 
@@ -311,7 +312,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
     {
       for (int j = 0; j < iterations; j++) {      
         val3 = DACaRefMid + (startVolt)/DACaRef*4095.0;
-        for (int16_t i = 0;  i < round(samples/2); i++) {
+        for (int16_t i = 0;  i < flipSample; i++) {
 
           analogWrite(A14, (int)val3);
           val3 += 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
@@ -324,7 +325,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
           while (usec < samplingDelay/2); // wait
           usec = usec - samplingDelay/2;
         }
-        for (int16_t i = 0; i < round(samples/2); i++) {
+        for (int16_t i = 0; i < flipSample; i++) {
 
           val3 -= 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
           analogWrite(A14, (int)val3);
@@ -344,7 +345,6 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
   }
 
 }
-
 
 
 
