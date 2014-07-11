@@ -29,8 +29,9 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include "selectport.h"
 #include "qcustomplot.h" // the header file of QCustomPlot
-
+#include <QtSerialPort/QSerialPort>
 namespace Ui {
 class MainWindow;
 }
@@ -49,7 +50,8 @@ public:
 
 private slots:
     void waveType();
-    void fillPortsInfo();
+    //void setUpComPort();
+    void openSerialPicker();
     void preParse();
     void parseAndPlot();
     void CVparseAndPlot();
@@ -87,6 +89,9 @@ private:
     int sampleNumber;
     
     int waveNum;
+    selectport *myPort;
+    QSerialPort *serial;
+   // QString *OS;
 
 
 };

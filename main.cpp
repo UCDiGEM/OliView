@@ -8,7 +8,7 @@
 
 #include <QApplication>
 #include "mainwindow.h"
-
+#include "selectport.h"
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)

@@ -12,12 +12,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
            mainwindow.cpp \
-         qcustomplot.cpp
+         qcustomplot.cpp \
+    selectport.cpp
 
 HEADERS  += mainwindow.h \
-         qcustomplot.h
+         qcustomplot.h \
+    selectport.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    selectport.ui
 
 OTHER_FILES += \
     favicon.ico

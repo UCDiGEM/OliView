@@ -29,7 +29,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -189,7 +189,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -329,7 +329,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -422,7 +422,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -458,7 +458,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -468,9 +468,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true">
-      <zorder>toolBox2</zorder>
-     </widget>
+     <widget class="QCustomPlot" name="customPlot" native="true"/>
     </item>
    </layout>
   </widget>
@@ -481,22 +479,17 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSerial_Port">
     <property name="title">
      <string>Serial Port</string>
     </property>
-    <widget class="QMenu" name="menuSelect_Port">
-     <property name="title">
-      <string>Select Port</string>
-     </property>
-    </widget>
-    <addaction name="menuSelect_Port"/>
     <addaction name="separator"/>
     <addaction name="actionReconnect"/>
     <addaction name="actionDisconnect"/>
+    <addaction name="menu_Select_Port"/>
    </widget>
    <widget class="QMenu" name="menuResolution">
     <property name="title">
@@ -624,6 +617,11 @@
   <action name="actionAsdf">
    <property name="text">
     <string>asdf</string>
+   </property>
+  </action>
+  <action name="menu_Select_Port">
+   <property name="text">
+    <string>selectport</string>
    </property>
   </action>
  </widget>

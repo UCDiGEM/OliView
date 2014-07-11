@@ -42,8 +42,10 @@
 #include <QMetaEnum>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include "selectport.h"
+#include "ui_selectport.h"
 
-QSerialPort serial;
+
 
 /*************************************************************************************************************/
 /************************************************ CONSTRUCTOR ************************************************/
@@ -58,14 +60,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
 
+    myPort =new selectport;
     ui->customPlot->xAxis->setRange(0, 1000);
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
+    connect(ui->menu_Select_Port, SIGNAL(triggered()), this, SLOT(openSerialPicker()));
+    serial = new QSerialPort(this);
+    //setUpComPort();
 
-    setUpComPort();
-
-    fillPortsInfo();
+    //fillPortsInfo();
 
     setupAldeSensGraph(ui->customPlot);
     
@@ -122,27 +126,62 @@ void MainWindow::setupWaveTypes()
 
 void MainWindow::setUpComPort()
 {
-    serial.setPortName("com6");
-    if (serial.open(QIODevice::ReadWrite))
+//#ifdef Q_WS_X11
+//QString *OS=new QString("Linux");
+//#endif
+//#ifdef Q_WS_WIN
+//    OS= QString("Windows");
+//#endif
+//#ifdef Q_WS_MACX
+//    OS= QString("Mac");
+//#endif
+
+//if(OS=="Windows")
+//{
+//    const QString pname=myPort->currentName();
+//}
+//else if(OS=="Mac"){
+    const QString pname="\\dev\\tty."+myPort->currentName();
+//}
+    qDebug() << "port name"<<myPort->currentName();
+
+        qDebug()<<"current name" <<pname;
+        serial->setPortName(pname);
+   // serial.setPortName("\dev\tty.usbmodem442291");
+    if (serial->open(QIODevice::ReadWrite))
     {
-        serial.setBaudRate(QSerialPort::Baud9600);
-        serial.setDataBits(QSerialPort::Data8);
-        serial.setParity(QSerialPort::NoParity);
-        serial.setStopBits(QSerialPort::OneStop);
-        serial.setFlowControl(QSerialPort::NoFlowControl);
+        serial->setBaudRate(QSerialPort::Baud9600);
+        serial->setDataBits(QSerialPort::Data8);
+        serial->setParity(QSerialPort::NoParity);
+        serial->setStopBits(QSerialPort::OneStop);
+        serial->setFlowControl(QSerialPort::NoFlowControl);
         ui->statusBar->showMessage(QString("COM Port Successfully Linked"));
-        serial.write("changeSampleRate!2000@#$%");                            //Set default Sampling Rate
-        serial.write("resolution!20@#$%");                                    //Set default Resolution
+        serial->write("changeSampleRate!2000@#$%");                            //Set default Sampling Rate
+        serial->write("resolution!20@#$%");                                    //Set default Resolution
 
     }
 
     else
     {
-        serial.close();
+        serial->close();
         ui->statusBar->showMessage(QString("Unable to Reach COM Port"));
     }
 
 
+}
+void MainWindow::openSerialPicker() {
+    if (!myPort) {
+        myPort = new selectport(this);
+    }
+    myPort->show();
+    myPort->raise();
+    myPort->activateWindow();
+
+
+    //portName = ui->DateScroll->date();
+    //myPicker->helpPaint(todayDate);
+
+ //   connect(selectPort, SIGNAL(choosePort(QString)), this, SLOT(updatePort(QString)));
 }
 
 /*************************************************************************************************************/
@@ -349,7 +388,7 @@ void MainWindow::sampASPressed()
     QString wave = QString::number(waveNum);
 
     QString mainInstructions = ("anoStrip!"+ASsv+"@"+ASpv+"#"+ASsr+"$"+wave+"%");
-    serial.write(mainInstructions.toStdString().c_str());
+    serial->write(mainInstructions.toStdString().c_str());
 
     QTimer::singleShot(140, this, SLOT(preParse()));
 
@@ -362,12 +401,13 @@ void MainWindow::sampASPressed()
 
 void MainWindow::sampCVPressed()
 {
+    setUpComPort();
     QString CVsv = QString::number(ui->CVstartVolt->value(),'f',2);
     QString CVpv = QString::number(ui->CVpeakVolt->value(),'f',2);
     QString CVsr = QString::number(ui->CVscanRate->value());
 
     QString mainInstructions = ("cycVolt!"+CVsv+"@"+CVpv+"#"+CVsr+"$"+"2%");
-    serial.write(mainInstructions.toStdString().c_str());
+    serial->write(mainInstructions.toStdString().c_str());
 
     QTimer::singleShot(140, this, SLOT(preParse()));;
 
@@ -377,11 +417,12 @@ void MainWindow::sampCVPressed()
 
 void MainWindow::sampPAPressed()
 {
+    setUpComPort();
     QString PApv = QString::number(ui->PApotVolt->value(),'f',2);
     QString PAst = QString::number(ui->PAsampTime->value(),'f',2);
 
     QString mainInstructions = ("potAmpero!"+PAst+"@"+PApv+"#$%");
-    serial.write(mainInstructions.toStdString().c_str());
+    serial->write(mainInstructions.toStdString().c_str());
 
     qDebug() << mainInstructions;
 
@@ -394,13 +435,13 @@ void MainWindow::sampPAPressed()
 /*************************************************************************************************************/
 
 void MainWindow::preParse() {
-
+setUpComPort();
     ui->customPlot->clearGraphs();
     ui->statusBar->showMessage(QString("Sampling..."));
 
-    QString sampleBuf = serial.readLine();
-    QString voltDivBuf = serial.readLine();
-    QString gainBuf = serial.readLine();
+    QString sampleBuf = serial->readLine();
+    QString voltDivBuf = serial->readLine();
+    QString gainBuf = serial->readLine();
 
     samples = sampleBuf.toInt();                                    //Teensy now sends the number of samples in the first line
     voltDiv = voltDivBuf.toFloat();
@@ -422,12 +463,12 @@ void MainWindow::preParse() {
 
 void MainWindow::parseAndPlot()
 {
-
+setUpComPort();
     QString inByteArray;
     QString firstFiveDump;
 
     for (int j = 0; j < 5; j++) {
-        firstFiveDump = serial.readLine();
+        firstFiveDump = serial->readLine();
     }
 
     if (samples > 4) {
@@ -441,7 +482,7 @@ void MainWindow::parseAndPlot()
     QVector<double> xValues(samples), yValues(samples);
 
     for (int i = 0; i<samples; i++) {
-        inByteArray = serial.readLine();
+        inByteArray = serial->readLine();
         y = inByteArray.toDouble();
         xValues[i] = x;
         yValues[i] = y;
@@ -454,7 +495,7 @@ void MainWindow::parseAndPlot()
 
     ui->customPlot->replot();
     ui->statusBar->showMessage(QString("Sampling Done!"));
-    QString dead = serial.readAll();
+    QString dead = serial->readAll();
 }
 
 void MainWindow::CVparseAndPlot()
@@ -463,7 +504,7 @@ void MainWindow::CVparseAndPlot()
     QString firstFiveDump;
 
     for (int j = 0; j < 5; j++) {
-        firstFiveDump = serial.readLine();
+        firstFiveDump = serial->readLine();
     }
 
     if (samples > 4) {
@@ -485,7 +526,7 @@ void MainWindow::CVparseAndPlot()
 
 
     for (int i = 0; i<samples/2; i++) {
-        inByteArray = serial.readLine();
+        inByteArray = serial->readLine();
         y = inByteArray.toDouble();
         xValuesUp[i] = potenApplied;
         yValuesUp[i] = y;
@@ -497,7 +538,7 @@ void MainWindow::CVparseAndPlot()
     ui->customPlot->replot();
 
     for (int i = 0; i<samples/2; i++) {
-        inByteArray = serial.readLine();
+        inByteArray = serial->readLine();
         y = inByteArray.toDouble();
         xValuesDown[i] = potenApplied;
         yValuesDown[i] = y;
@@ -512,7 +553,7 @@ void MainWindow::CVparseAndPlot()
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->replot();
     ui->statusBar->showMessage(QString("Sampling Done!"));
-    QString dead = serial.readAll();
+    QString dead = serial->readAll();
 }
 
 /*************************************************************************************************************/
@@ -524,7 +565,7 @@ void MainWindow::CVparseAndPlot()
 void MainWindow::rate2000Selected()
 {
     sampleRate = 2000;
-    serial.write("changeSampleRate!2000@0#0$0%");
+    serial->write("changeSampleRate!2000@0#0$0%");
     ui->statusBar->showMessage(QString("Sampling Rate: 2000 Hz"));
 }
 
@@ -533,7 +574,7 @@ void MainWindow::rate2000Selected()
 void MainWindow::rate5000Selected()
 {
     sampleRate = 5000;
-    serial.write("changeSampleRate!5000@0#0$0%");
+    serial->write("changeSampleRate!5000@0#0$0%");
     ui->statusBar->showMessage(QString("Sampling Rate: 5000 Hz"));
 }
 
@@ -542,7 +583,7 @@ void MainWindow::rate5000Selected()
 void MainWindow::rate10000Selected()
 {
     sampleRate = 10000;
-    serial.write("changeSampleRate!10000@0#0$0%");
+    serial->write("changeSampleRate!10000@0#0$0%");
     ui->statusBar->showMessage(QString("Sampling Rate: 10000 Hz"));
 }
 
@@ -552,7 +593,7 @@ void MainWindow::disconnectSelected()
 {
     clearAllSelected();
     ui->statusBar->showMessage(QString("COM Port is disconnected"));
-    serial.close();
+    serial->close();
 }
 
 //-----------------------------------------------------------------------------------------------Functionality of Close
@@ -591,36 +632,11 @@ void MainWindow::clearAllSelected()
 }
 //------------------------------------------------------------------------------------------Fill Available Serial Ports
 
-void MainWindow::fillPortsInfo()
-{
-    //ui->serialPortInfoListBox->clear();
-    //static const QString blankString = QObject::tr("N/A");
-    //QString description;
-    //QString manufacturer;
-
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
-        QStringList list;
-        //description = info.description();
-        //manufacturer = info.manufacturer();
-        list << info.portName();
-        //<< (!description.isEmpty() ? description : blankString)
-        //<< (!manufacturer.isEmpty() ? manufacturer : blankString)
-        //<< info.systemLocation();
-
-        //ui->serialPortInfoListBox->addItem(list.first(), list);
-        for (int i = 0; i < list.size(); i++)
-        {
-            ui->menuSelect_Port->addAction(list.at(i));
-        }
-
-    }
-}
-
 //--------------------------------------------------------------------------------------When 10microA Resolution Chosen
 
 void MainWindow::res10ASelected()
 {
-    serial.write("resolution!20@#$%");
+    serial->write("resolution!20@#$%");
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
 
@@ -630,7 +646,7 @@ void MainWindow::res10ASelected()
 
 void MainWindow::res1000nASelected()
 {
-    serial.write("resolution!2000@#$%");
+    serial->write("resolution!2000@#$%");
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
 }
@@ -639,14 +655,14 @@ void MainWindow::res1000nASelected()
 
 void MainWindow::res100nASelected()
 {
-    serial.write("resolution!200@#$%");
+    serial->write("resolution!200@#$%");
 }
 
 //------------------------------------------------------------------------------------------When 10nA Resolution Chosen
 
 void MainWindow::res10nASelected()
 {
-    serial.write("resolution!20@#$%");
+    serial->write("resolution!20@#$%");
 }
 
 /*************************************************************************************************************/
@@ -656,7 +672,7 @@ void MainWindow::res10nASelected()
 MainWindow::~MainWindow()
 {
     delete ui;
-    serial.close();
+    serial->close();
 }
 
 
