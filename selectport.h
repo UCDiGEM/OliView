@@ -4,8 +4,8 @@
 #include <QDialog>
 #include <QMainWindow>
 //#include<QSerialPort>
-#include <QIntValidator>
 #include <QtSerialPort/QSerialPort>
+//#include "mainwindow.h"
 namespace Ui {
 class selectport;
 }
@@ -22,11 +22,14 @@ public:
     explicit selectport(QWidget *parent = 0);
     ~selectport();
 
-     QString const currentName();
+//    QString const currentName();
+signals:
+    void portSignal(QString );
 
 private:
     Ui::selectport *ui;
-    QIntValidator *intValidator;
+
+
 
 
 private slots:

@@ -46,10 +46,11 @@ public:
     
     void setupWaveTypes();
     void setupAldeSensGraph(QCustomPlot *customPlot);
-    void setUpComPort();
+
 
 private slots:
     void waveType();
+    void setUpComPort(QString currentName);
     //void setUpComPort();
     void openSerialPicker();
     void preParse();
@@ -90,8 +91,8 @@ private:
     
     int waveNum;
     selectport *myPort;
-    QSerialPort *serial;
-   // QString *OS;
+  //  QSerialPort *serial;
+   QString portname;
 
 
 };
