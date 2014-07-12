@@ -244,7 +244,7 @@ void anoStrip() {
 //
 
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
-  int samples = round(sampTime * sampleRateFloat+0.5); // With delay of 0.5 ms, 2000 samples per second
+  int samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
 
   Serial.println(samples);                                            //samples
   double voltDiv = scanRate/(1000.0*sampleRateFloat);
