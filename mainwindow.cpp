@@ -66,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
     setUpComPort();
 
     fillPortsInfo();
-
     setupAldeSensGraph(ui->customPlot);
     
     setupWaveTypes();
@@ -122,7 +121,7 @@ void MainWindow::setupWaveTypes()
 
 void MainWindow::setUpComPort()
 {
-    serial.setPortName("com6");
+    serial.setPortName("com3");
     if (serial.open(QIODevice::ReadWrite))
     {
         serial.setBaudRate(QSerialPort::Baud9600);
@@ -401,15 +400,15 @@ void MainWindow::preParse() {
 
     QString sampleBuf = serial.readLine();
     QString voltDivBuf = serial.readLine();
-    QString gainBuf = serial.readLine();
+    QString flipSampleBuf = serial.readLine();
 
     samples = sampleBuf.toInt();                                    //Teensy now sends the number of samples in the first line
     voltDiv = voltDivBuf.toFloat();
-    gain = gainBuf.toFloat();
+    flipSample = flipSampleBuf.toInt();
 
     qDebug() << samples;
     qDebug() << voltDiv;
-    qDebug() << gain;
+    qDebug() << flipSample;
     if (ui->toolBox2->currentIndex() == 1) {
         QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
     }
@@ -467,14 +466,15 @@ void MainWindow::parseAndPlot()
 void MainWindow::CVparseAndPlot()
 {
     QString inByteArray;
-    QString firstFiveDump;
+    QString firstFourDump;
 
-    for (int j = 0; j < 5; j++) {
-        firstFiveDump = serial.readLine();
+    for (int j = 0; j < 4; j++) {
+        firstFourDump = serial.readLine();
     }
 
-    if (samples > 4) {
-        samples -= 5;
+    if (samples > 3) {
+        samples -= 4;
+        flipSample -= 2;
     }
 
     double potenApplied;
@@ -487,11 +487,10 @@ void MainWindow::CVparseAndPlot()
         potenApplied = ui->ASstartVolt->value();
     }
 
-    QVector<double> xValuesUp(samples/2), yValuesUp(samples/2);
-    QVector<double> xValuesDown(samples/2), yValuesDown(samples/2);
+    QVector<double> xValuesUp(flipSample), yValuesUp(flipSample);
+    QVector<double> xValuesDown(flipSample), yValuesDown(flipSample);
 
-
-    for (int i = 0; i<samples/2; i++) {
+    for (int i = 0; i<flipSample; i++) {
         inByteArray = serial.readLine();
         y = inByteArray.toDouble();
         xValuesUp[i] = potenApplied;
@@ -499,11 +498,10 @@ void MainWindow::CVparseAndPlot()
         potenApplied += voltDiv;
     }
     ui->customPlot->addGraph();
-    // rescale value (vertical) axis to fit the current data:        ui->customPlot->graph(2)->clearData();
     ui->customPlot->graph(0)->setData(xValuesUp, yValuesUp);
     ui->customPlot->replot();
 
-    for (int i = 0; i<samples/2; i++) {
+    for (int i = 0; i<flipSample; i++) {
         inByteArray = serial.readLine();
         y = inByteArray.toDouble();
         xValuesDown[i] = potenApplied;
@@ -519,13 +517,14 @@ void MainWindow::CVparseAndPlot()
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->replot();
     ui->statusBar->showMessage(QString("Sampling Done!"));
-    QString dead = serial.readAll();
-    
+
+
     count += 1;
-    
-    if (count > ui->ASiterations->value()) {
+
+    if (count >= ui->ASiterations->value()) {
         count = 0;
         timer->stop();
+        QString dead = serial.readAll();
     }
 }
 
@@ -615,10 +614,10 @@ void MainWindow::fillPortsInfo()
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         QStringList list;
         //description = info.description();
-        //manufacturer = info.manufacturer();
+        qDebug() << info.manufacturer();
         list << info.portName();
         //<< (!description.isEmpty() ? description : blankString)
-        //<< (!manufacturer.isEmpty() ? manufacturer : blankString)
+        // (!manufacturer.isEmpty() ? manufacturer : blankString)
         //<< info.systemLocation();
 
         //ui->serialPortInfoListBox->addItem(list.first(), list);
