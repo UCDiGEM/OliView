@@ -89,7 +89,6 @@ private:
     int flipSample;
     int waveNum;
     int count;
-    int iterations;
 
 
 };
