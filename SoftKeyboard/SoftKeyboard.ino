@@ -35,6 +35,7 @@ const int readPin = A2;  // Main Analog Input
 const int outPin = A14;
 const int sp4tOne = 11;  // Resolution Switch 1
 const int sp4tTwo = 10;  // Resolution Switch 2
+const int ledPin = 13;  //LED pin
 
 elapsedMicros usec = 0;
 
@@ -48,11 +49,11 @@ String fiveStruct;
 String sixStruct;
 
 double value = 0; // ADC reading value
-float aRef = 2.048; // Analog Reference
+float aRef = 2.046; // Analog Reference
 float aRefMid = aRef/2;
 float DACaRef = 3.3;
 float DACaRefMid = aRef*2047.5/DACaRef;
-float DCoffset = -0.00425;    //measured analytically
+float DCoffset = 0;    //measured analytically
 
 //---------------------------------------------------------------------------------Setup
 
@@ -60,7 +61,7 @@ void setup() {
 
   Serial.begin(9600);
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   pinMode(readPin, INPUT);
   pinMode(outPin, OUTPUT);
   pinMode(sp4tOne, OUTPUT);
@@ -79,7 +80,7 @@ void setup() {
 void loop() {
 
   analogWrite(A14, DACaRefMid);                            //Maintain virtual zero at electrode.
-
+  
   if (Serial.available()) {
     // Interprets commands from computer
     // All commands must be terminated with a comma ","
@@ -245,10 +246,11 @@ void anoStrip() {
 
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
   int samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
-
+  
+ 
   Serial.println(samples);                                            //samples
   double voltDiv = scanRate/(1000.0*sampleRateFloat);
-  int flipSample = round(samples/2+0.5);
+  int flipSample = round(samples/2);
   Serial.println(voltDiv,6);   //voltDiv
   Serial.println(flipSample);
   while (usec < 20); // wait
@@ -262,6 +264,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
 
     case (0):
     {
+        digitalWrite(ledPin, HIGH);
       val = DACaRefMid + (endVolt) * 4095.0 / DACaRef;
       analogWrite(A14, (int)val);
 
@@ -274,14 +277,14 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
         while (usec < samplingDelay/2); // wait
         usec = usec - samplingDelay/2;
       }
-
-      analogWrite(A14, DACaRefMid);
+        digitalWrite(ledPin, LOW);
     }
 
     break;
     //---------------------------------------------------------------------------------Sine Wave
     case (1):
     {
+      digitalWrite(ledPin, HIGH);
       for (int16_t i = 0; i < samples; i++) {
 
         val2 = DACaRefMid + sin(phase) * endVolt*4095.0/DACaRef;
@@ -299,7 +302,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
         usec = usec - samplingDelay/2;
       }
       phase = 0.0;
-      analogWrite(A14, DACaRefMid);
+        digitalWrite(ledPin, LOW);
     }
 
     break;
@@ -310,7 +313,10 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
     //
     case (2): // triangle wave
     {
-      for (int j = 0; j < iterations; j++) {      
+      int j = 0;
+      while (j < iterations) {
+        digitalWrite(ledPin, HIGH);
+        j++;      
         val3 = DACaRefMid + (startVolt)/DACaRef*4095.0;
         for (int16_t i = 0;  i < flipSample; i++) {
 
@@ -324,12 +330,15 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
           Serial.println(((value * aRef / 65535.0-aRef/2+ DCoffset)/aRef)*gain, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
           while (usec < samplingDelay/2); // wait
           usec = usec - samplingDelay/2;
+          
+          
         }
+        digitalWrite(ledPin, LOW);
         for (int16_t i = 0; i < flipSample; i++) {
 
-          val3 -= 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
           analogWrite(A14, (int)val3);
-
+          val3 -= 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
+          
           while (usec < samplingDelay/2); // wait
           usec = usec - samplingDelay/2;
 
@@ -338,14 +347,16 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
           while (usec < samplingDelay/2); // wait
           usec = usec - samplingDelay/2;
         }
+          
       }
-      analogWrite(A14, DACaRefMid);
+      
     }
     break;
+
   }
-
+    analogWrite(A14, DACaRefMid);
+    digitalWrite(ledPin, LOW);
 }
-
 
 
 
