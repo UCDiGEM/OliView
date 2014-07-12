@@ -11,7 +11,672 @@
    </rect>
   </property>
   <property name="windowTitle">
+   <string>OliView</string><?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>654</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
    <string>OliView</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QToolBox" name="toolBox2">
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <widget class="QWidget" name="toolBoxPage1_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>250</width>
+         <height>460</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Anodic Stripping</string>
+       </attribute>
+       <widget class="QPushButton" name="sampButtonAS">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>254</y>
+          <width>107</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sample</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="ASstartVolt">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>10</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> V</string>
+        </property>
+        <property name="minimum">
+         <double>-1.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Starting Voltage</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="ASscanRate">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>110</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> mV/s</string>
+        </property>
+        <property name="decimals">
+         <number>0</number>
+        </property>
+        <property name="minimum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>2000.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>200.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>120</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Scan Rate</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="ASpeakVolt">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>60</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> V</string>
+        </property>
+        <property name="minimum">
+         <double>-1.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_6">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>216</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Wave Type</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_7">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Peak Voltage</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="ASwaveType">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>207</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="ASiterations">
+        <property name="geometry">
+         <rect>
+          <x>121</x>
+          <y>160</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>166</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Iterations</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="toolBoxPage2_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>250</width>
+         <height>460</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Cyclic Voltammetry</string>
+       </attribute>
+       <widget class="QDoubleSpinBox" name="CVstartVolt">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>10</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> V</string>
+        </property>
+        <property name="minimum">
+         <double>-1.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Starting Voltage</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="CVpeakVolt">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>60</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> V</string>
+        </property>
+        <property name="minimum">
+         <double>-1.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>1.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_9">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Peak Voltage</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="CVscanRate">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>110</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> mV/s</string>
+        </property>
+        <property name="decimals">
+         <number>0</number>
+        </property>
+        <property name="minimum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>2000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>200.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_10">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>120</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Scan Rate</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="sampButtonCV">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>170</y>
+          <width>107</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sample</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="toolBoxPage3_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>250</width>
+         <height>460</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Potentiostatic Amperometry</string>
+       </attribute>
+       <widget class="QDoubleSpinBox" name="PApotVolt">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>60</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> V</string>
+        </property>
+        <property name="minimum">
+         <double>-1.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.600000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_11">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sampling Time</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="PAsampTime">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>10</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="suffix">
+         <string> s</string>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_12">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Potential at CE</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="sampButtonPA">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>120</y>
+          <width>107</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sample</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="toolBoxPage4_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>250</width>
+         <height>460</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Enzyme Specificity</string>
+       </attribute>
+       <widget class="QListWidget" name="listWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>41</y>
+          <width>221</width>
+          <height>221</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>270</y>
+          <width>31</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="page">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>250</width>
+         <height>460</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Aldehyde Prediction</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCustomPlot" name="customPlot" native="true"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1000</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSerial_Port">
+    <property name="title">
+     <string>Serial Port</string>
+    </property>
+    <widget class="QMenu" name="menuSelect_Port">
+     <property name="title">
+      <string>Select Port</string>
+     </property>
+    </widget>
+    <addaction name="menuSelect_Port"/>
+    <addaction name="separator"/>
+    <addaction name="actionReconnect"/>
+    <addaction name="actionDisconnect"/>
+   </widget>
+   <widget class="QMenu" name="menuResolution">
+    <property name="title">
+     <string>Resolution</string>
+    </property>
+    <addaction name="action_10_A"/>
+    <addaction name="action_1000_nA"/>
+    <addaction name="action_100_nA"/>
+    <addaction name="action_10_nA"/>
+   </widget>
+   <widget class="QMenu" name="menuGraph">
+    <property name="title">
+     <string>Graph</string>
+    </property>
+    <addaction name="actionClear_All"/>
+    <addaction name="actionReset_Axis"/>
+   </widget>
+   <widget class="QMenu" name="menuSampling_Rate">
+    <property name="title">
+     <string>Sampling Rate</string>
+    </property>
+    <addaction name="action2000_Hz"/>
+    <addaction name="action5000_Hz"/>
+    <addaction name="action10000_Hz"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionClose"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout_Us"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuGraph"/>
+   <addaction name="menuResolution"/>
+   <addaction name="menuSampling_Rate"/>
+   <addaction name="menuSerial_Port"/>
+  </widget>
+  <action name="actionDisconnect">
+   <property name="text">
+    <string>Disconnect</string>
+   </property>
+  </action>
+  <action name="actionReconnect">
+   <property name="text">
+    <string>Reconnect</string>
+   </property>
+  </action>
+  <action name="action_10_A">
+   <property name="text">
+    <string extracomment="100000">+/- 10 µA</string>
+   </property>
+  </action>
+  <action name="action_1000_nA">
+   <property name="text">
+    <string extracomment="1000000">+/- 1000 nA</string>
+   </property>
+  </action>
+  <action name="action_100_nA">
+   <property name="text">
+    <string extracomment="10000000">+/- 100 nA</string>
+   </property>
+  </action>
+  <action name="action_10_nA">
+   <property name="text">
+    <string extracomment="100000000">+/- 10 nA</string>
+   </property>
+  </action>
+  <action name="actionClear_All">
+   <property name="text">
+    <string>Clear All</string>
+   </property>
+  </action>
+  <action name="actionReset_Axis">
+   <property name="text">
+    <string>Reset Axis</string>
+   </property>
+  </action>
+  <action name="action2000_Hz">
+   <property name="text">
+    <string>2000 Hz</string>
+   </property>
+  </action>
+  <action name="action5000_Hz">
+   <property name="text">
+    <string>5000 Hz</string>
+   </property>
+  </action>
+  <action name="action10000_Hz">
+   <property name="text">
+    <string>10000 Hz</string>
+   </property>
+  </action>
+  <action name="actionPortNames">
+   <property name="text">
+    <string>PortNamesGoHere</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="actionAbout_Us">
+   <property name="text">
+    <string>About Us</string>
+   </property>
+  </action>
+  <action name="actionHello">
+   <property name="text">
+    <string>hello</string>
+   </property>
+  </action>
+  <action name="actionWork">
+   <property name="text">
+    <string>work</string>
+   </property>
+  </action>
+  <action name="actionHello_2">
+   <property name="text">
+    <string>hello</string>
+   </property>
+  </action>
+  <action name="actionAsdf">
+   <property name="text">
+    <string>asdf</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
+
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
