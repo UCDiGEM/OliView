@@ -29,7 +29,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -39,7 +39,7 @@
         <property name="geometry">
          <rect>
           <x>70</x>
-          <y>220</y>
+          <y>254</y>
           <width>107</width>
           <height>28</height>
          </rect>
@@ -150,7 +150,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>170</y>
+          <y>216</y>
           <width>91</width>
           <height>16</height>
          </rect>
@@ -176,10 +176,36 @@
         <property name="geometry">
          <rect>
           <x>120</x>
+          <y>207</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="ASiterations">
+        <property name="geometry">
+         <rect>
+          <x>121</x>
           <y>160</y>
           <width>101</width>
           <height>31</height>
          </rect>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>166</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Iterations</string>
         </property>
        </widget>
       </widget>
@@ -189,7 +215,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -329,7 +355,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -422,7 +448,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -458,7 +484,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>460</height>
+         <height>417</height>
         </rect>
        </property>
        <attribute name="label">
@@ -481,7 +507,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSerial_Port">

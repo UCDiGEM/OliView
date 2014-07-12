@@ -46,6 +46,7 @@ public:
     void setupWaveTypes();
     void setupAldeSensGraph(QCustomPlot *customPlot);
     void setUpComPort();
+    QTimer *timer;
 
 private slots:
     void waveType();
@@ -87,6 +88,7 @@ private:
     int sampleNumber;
     
     int waveNum;
+    int count;
 
 
 };
