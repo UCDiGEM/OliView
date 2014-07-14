@@ -36,6 +36,10 @@ const int outPin = A14;
 const int sp4tOne = 11;  // Resolution Switch 1
 const int sp4tTwo = 10;  // Resolution Switch 2
 const int ledPin = 13;  //LED pin
+const int refCounterShortSwitch = 9;      //in2
+const int workingElectrodeSwitch = 8;     //in4
+const int counterElectrodeSwitch = 7;     //in1
+ 
 
 elapsedMicros usec = 0;
 
@@ -49,7 +53,7 @@ String fiveStruct;
 String sixStruct;
 
 double value = 0; // ADC reading value
-float aRef = 2.046; // Analog Reference
+float aRef = 2.048; // Analog Reference
 float aRefMid = aRef/2;
 float DACaRef = 3.3;
 float DACaRefMid = aRef*2047.5/DACaRef;
@@ -66,7 +70,10 @@ void setup() {
   pinMode(outPin, OUTPUT);
   pinMode(sp4tOne, OUTPUT);
   pinMode(sp4tTwo, OUTPUT);
-
+  pinMode(refCounterShortSwitch, OUTPUT);      
+  pinMode(workingElectrodeSwitch, OUTPUT);
+  pinMode(counterElectrodeSwitch, OUTPUT);
+  
   analogWriteResolution(12);
   analogReadAveraging(32);
   analogReadRes(16);
@@ -245,14 +252,22 @@ void anoStrip() {
 //
 
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
-  int samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
+  int16_t samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
   
- 
+  //digitalWrite(refCounterShortSwitch, HIGH);      
+  digitalWrite(workingElectrodeSwitch, HIGH);
+  digitalWrite(counterElectrodeSwitch, HIGH);
+
   Serial.println(samples);                                            //samples
   double voltDiv = scanRate/(1000.0*sampleRateFloat);
-  int flipSample = round(samples/2);
+  int16_t flipSample = round(samples/2+0.5);
   Serial.println(voltDiv,6);   //voltDiv
   Serial.println(flipSample);
+  
+  for (int p = 0; p < 5; p++) {
+    float dead = analogRead(readPin);
+  }
+  
   while (usec < 20); // wait
   usec = usec - 20;
 
@@ -264,7 +279,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
 
     case (0):
     {
-        digitalWrite(ledPin, HIGH);
+      digitalWrite(ledPin, HIGH);
       val = DACaRefMid + (endVolt) * 4095.0 / DACaRef;
       analogWrite(A14, (int)val);
 
@@ -355,7 +370,9 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
 
   }
     analogWrite(A14, DACaRefMid);
-    digitalWrite(ledPin, LOW);
+  digitalWrite(refCounterShortSwitch, LOW);      
+  digitalWrite(workingElectrodeSwitch, LOW);
+  digitalWrite(counterElectrodeSwitch, LOW);
 }
 
 
