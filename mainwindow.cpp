@@ -422,7 +422,6 @@ void MainWindow::sampPAPressed()
 
 void MainWindow::preParse() {
 
-    ui->customPlot->clearGraphs();
     ui->statusBar->showMessage(QString("Sampling..."));
 
     QString sampleBuf = serial.readLine();
@@ -437,13 +436,13 @@ void MainWindow::preParse() {
     qDebug() << voltDiv;
     qDebug() << flipSample;
     if (ui->toolBox2->currentIndex() == 1) {
-        QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
+        QTimer::singleShot(samples*500/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
 
     }
     else if (waveNum == 2 && ui->toolBox2->currentIndex()==0) {
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(CVparseAndPlot()));
-        timer->start(samples*1000/(sampleRate*ui->ASiterations->value())+500);
+        timer->start(samples*500/sampleRate);
         ui->customPlot->xAxis->setLabel("Volts (V)");
         ui->customPlot->yAxis->setLabel("Microamps (µA)");
 
@@ -496,9 +495,11 @@ void MainWindow::CVparseAndPlot()
 
     if ((ui->toolBox2->currentIndex() == 1) ) {
         potenApplied = ui->CVstartVolt->value();
+        ui->customPlot->xAxis->setRange(ui->CVstartVolt->value()*1.1, ui->CVpeakVolt->value()*1.1);
     }
     else if(ui->toolBox2->currentIndex() == 0) {
         potenApplied = ui->ASstartVolt->value();
+        ui->customPlot->xAxis->setRange(ui->ASstartVolt->value()*1.1, ui->ASpeakVolt->value()*1.1);
     }
 
     QVector<double> xValuesUp(flipSample), yValuesUp(flipSample);
@@ -525,7 +526,6 @@ void MainWindow::CVparseAndPlot()
 
     ui->customPlot->addGraph();
     ui->customPlot->graph(1)->setData(xValuesDown, yValuesDown);
-    ui->customPlot->xAxis->setRange(-potenApplied*0.10, 1.2);
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->replot();
 
@@ -534,9 +534,14 @@ void MainWindow::CVparseAndPlot()
 
     count += 1;
 
+    if (ui->toolBox2->currentIndex()==1) {
+        count = 0;
+    }
+
     if (count >= ui->ASiterations->value() && waveNum == 2 && ui->toolBox2->currentIndex()==0) {
         count = 0;
         timer->stop();
+        ui->statusBar->showMessage(QString("Sampling Done!"));
     }
 }
 
@@ -594,7 +599,7 @@ void MainWindow::resetAxis()
 
     ui->customPlot->xAxis->setRange(0, 1000*samples/sampleRate);
 
-    if (waveNum == 2 || ui->toolBox2->currentIndex() == 1) {
+    if ((waveNum == 2 && ui->toolBox2->currentIndex() == 0) || ui->toolBox2->currentIndex() == 1) {
         ui->customPlot->xAxis->setRange(-samples*1000/sampleRate*0.10, samples*1000/sampleRate*0.60);
     }
     else {
@@ -632,7 +637,7 @@ void MainWindow::res1000nASelected()
 {
     serial.write("resolution!2000@#$%^");
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
-    ui->customPlot->yAxis->setLabel("Nanoamps (µA)");
+    ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
 }
 
 //-----------------------------------------------------------------------------------------When 100nA Resolution Chosen
