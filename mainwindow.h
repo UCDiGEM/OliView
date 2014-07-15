@@ -52,11 +52,13 @@ private slots:
     void waveType();
     void fillPortsInfo();
     void preParse();
+    void pointPlot();
     void parseAndPlot();
     void CVparseAndPlot();
     void mouseWheel();
     void mousePress();
     void removeSelectedGraph();
+    void exportSelectedGraph();
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
     void selectionChanged();
@@ -80,6 +82,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QString teensyPort;
     int samples;
     int sampleRate;
     float gain;
