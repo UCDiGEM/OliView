@@ -38,21 +38,26 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+    
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
+    
+    QTimer *timer;
+    
+private slots:
     void setupWaveTypes();
     void setupAldeSensGraph(QCustomPlot *customPlot);
+    
     void setUpComPort();
-    QTimer *timer;
-
-private slots:
+    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
     void waveType();
     void fillPortsInfo();
     void preParse();
     void pointPlot();
+    void readEverything();
+    
     void parseAndPlot();
     void CVparseAndPlot();
     void mouseWheel();
@@ -70,16 +75,16 @@ private slots:
     void closeSelected();
     void disconnectSelected();
     void graphClicked(QCPAbstractPlottable *plottable);
-
+    
     void res10ASelected();
     void res10nASelected();
     void res100nASelected();
     void res1000nASelected();
-
+    
     void rate2000Selected();
     void rate5000Selected();
     void rate10000Selected();
-
+    
 private:
     Ui::MainWindow *ui;
     QString teensyPort;
@@ -88,12 +93,13 @@ private:
     float gain;
     float voltDiv;
     int graphMemory;
-    int sampleNumber;
+    double timeValue;
+    QElapsedTimer elapsedTimer;
     int flipSample;
     int waveNum;
     int count;
-
-
+    
+    
 };
 
 #endif // MAINWINDOW_H
