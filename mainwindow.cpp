@@ -290,6 +290,8 @@ void MainWindow::exportSelectedGraph() {
             QTextStream output(&data);
             const QCPDataMap *dataMap = ui->customPlot->selectedGraphs().first()->data();
             QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+
+            output << "x Value, x Value, y Value" << endl;
             while (i != dataMap->constEnd()) {
                 output << i.key()<< ", " << i.value().key << ", " << i.value().value << endl;
                 ++i;
