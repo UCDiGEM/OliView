@@ -214,8 +214,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>460</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -447,8 +447,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>460</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -483,8 +483,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>460</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -550,8 +550,9 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionClose"/>
+    <addaction name="actionExport_All_2"/>
     <addaction name="separator"/>
+    <addaction name="actionClose"/>
     <addaction name="actionAbout_Us"/>
    </widget>
    <addaction name="menuFile"/>
@@ -648,6 +649,16 @@
   <action name="actionAsdf">
    <property name="text">
     <string>asdf</string>
+   </property>
+  </action>
+  <action name="actionExport_All">
+   <property name="text">
+    <string>Export All</string>
+   </property>
+  </action>
+  <action name="actionExport_All_2">
+   <property name="text">
+    <string>Export All</string>
    </property>
   </action>
  </widget>
