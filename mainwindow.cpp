@@ -160,7 +160,7 @@ void MainWindow::fillPortsInfo()
 void MainWindow::setUpComPort()
 {
 
-    serial.setPortName(teensyPort.toStdString().c_str());
+    serial.setPortName(teensyPort);
     if (serial.open(QIODevice::ReadWrite))
     {
         serial.setBaudRate(QSerialPort::Baud9600);
@@ -473,6 +473,7 @@ void MainWindow::sampPAPressed()
 
 void MainWindow::preParse() {
 
+    graphMemory = 0;
 
     ui->statusBar->showMessage(QString("Sampling..."));
 
@@ -501,7 +502,7 @@ void MainWindow::preParse() {
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(readEverything()));
         timer->start(100);
-        timeValue = 0;
+        graphMemory = 0;
 
     }
     else {
@@ -532,15 +533,15 @@ void MainWindow::readEverything() {
 
         for(int i = 0; i < everythingAvail.length(); i++) {
 
+            graphMemory++;
             double analogRead = everythingAvail.at(i).toDouble();
             //qDebug() << analogRead;
             ui->customPlot->graph()->addData(timeValue, analogRead);
 
             timeValue += 1000/double(sampleRate);
 
-            if ((double(sampleRate)*timeValue/1000) >= double(samples)) {
+            if (graphMemory >= samples) {
                 timer->stop();
-                return;
             }
 
         }
@@ -563,7 +564,6 @@ void MainWindow::parseAndPlot()
 
     double x = 0;
     double y = 0;
-
 
     QVector<double> xValues(samples), yValues(samples);
 
