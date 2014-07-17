@@ -56,16 +56,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     setWindowTitle("OliView");
     ui->setupUi(this);
-    ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
+    ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
 
     ui->customPlot->xAxis->setRange(0, 1000);
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
-
-    setUpComPort();
-
-    fillPortsInfo();
 
     setupAldeSensGraph(ui->customPlot);
     
@@ -77,6 +73,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(ui->reconButton, SIGNAL(clicked()), this, SLOT(reconnectButtonPressed()));
     //connect(ui->clrButton, SIGNAL(clicked()), this, SLOT(clearButtonPressed()));
     connect(ui->ASwaveType, SIGNAL(activated(int)), this, SLOT(waveType()));
+
+    connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetAxis()));
 
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
     connect(ui->action_10_nA, SIGNAL(triggered()), this, SLOT(res10nASelected()));
@@ -94,6 +92,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     sampleRate = 2000;
     waveNum = 0;
+
+    fillPortsInfo();
+    resetAxis();
+
 }
 
 /*************************************************************************************************************/
@@ -120,9 +122,45 @@ void MainWindow::setupWaveTypes()
 /******************************* INITIALIZE ALL SERIAL PORT DATA FOR SAMPLING ********************************/
 /*************************************************************************************************************/
 
+//------------------------------------------------------------------------------------------Fill Available Serial Ports
+
+void MainWindow::fillPortsInfo()
+{
+    //ui->serialPortInfoListBox->clear();
+    //static const QString blankString = QObject::tr("N/A");
+    //QString description;
+    //QString manufacturer;
+
+
+    QStringList list, descrip;
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+
+
+        list << info.portName();
+        descrip << info.description();
+
+        qDebug() << descrip;
+
+        for (int i = 0; i < descrip.size(); i++)
+        {
+            if (descrip.at(i).contains("teensy",Qt::CaseInsensitive)) {
+                teensyPort = list.at(i);
+                setUpComPort();
+                return;
+            }
+        }
+    }
+
+
+    teensyPort = QInputDialog::getItem(this, "Select your COM port", "Available Ports:", list);
+    setUpComPort();
+
+}
+
 void MainWindow::setUpComPort()
 {
-    serial.setPortName("com6");
+
+    serial.setPortName(teensyPort);
     if (serial.open(QIODevice::ReadWrite))
     {
         serial.setBaudRate(QSerialPort::Baud9600);
@@ -145,31 +183,20 @@ void MainWindow::setUpComPort()
 
 }
 
+
+
 /*************************************************************************************************************/
 /************************************ INITIALIZE PROPERTIES OF THE GRAPH *************************************/
 /*************************************************************************************************************/
 
 void MainWindow::setupAldeSensGraph(QCustomPlot *customPlot)
 {
-
-    // applies a different color brush to the first 9 graphs
-    for (int i=0; i<10; ++i) {
-        ui->customPlot->addGraph(); // blue line
-        ui->customPlot->graph(i)->setAntialiasedFill(false);
-
-        switch (i) {
-        case 0: customPlot->graph(i)->setPen(QPen(Qt::blue)); break;
-        case 1: customPlot->graph(i)->setPen(QPen(Qt::red)); break;
-        case 2: customPlot->graph(i)->setPen(QPen(Qt::green)); break;
-        case 3: customPlot->graph(i)->setPen(QPen(Qt::yellow)); break;
-        case 4: customPlot->graph(i)->setPen(QPen(Qt::cyan)); break;
-        case 5: customPlot->graph(i)->setPen(QPen(Qt::magenta)); break;
-        case 6: customPlot->graph(i)->setPen(QPen(Qt::darkRed)); break;
-        case 7: customPlot->graph(i)->setPen(QPen(Qt::darkGreen)); break;
-        case 8: customPlot->graph(i)->setPen(QPen(Qt::darkBlue)); break;
-
-        }
-    }
+    ui->customPlot->legend->setVisible(true);
+    QFont legendFont = font();
+    legendFont.setPointSize(10);
+    ui->customPlot->legend->setFont(legendFont);
+    ui->customPlot->legend->setSelectedFont(legendFont);
+    ui->customPlot->legend->setSelectableParts(QCPLegend::spItems);
 
     customPlot->xAxis->setTickStep(1);
     customPlot->axisRect()->setupFullAxesBox();
@@ -251,6 +278,28 @@ void MainWindow::removeSelectedGraph()
     }
 }
 
+void MainWindow::exportSelectedGraph() {
+
+    if (ui->customPlot->selectedGraphs().size() > 0)
+    {
+
+        QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", "filename.csv", "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
+        QFile data(filename);
+        if(data.open(QFile::WriteOnly |QFile::Truncate))
+        {
+            QTextStream output(&data);
+            const QCPDataMap *dataMap = ui->customPlot->selectedGraphs().first()->data();
+            QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+
+            output << "x Value, x Value, y Value" << endl;
+            while (i != dataMap->constEnd()) {
+                output << i.key()<< ", " << i.value().key << ", " << i.value().value << endl;
+                ++i;
+            }
+        }
+    }
+}
+
 //----------------------------------------------------------------------------------------------------Remove All Graphs
 
 void MainWindow::removeAllGraphs()
@@ -269,6 +318,7 @@ void MainWindow::contextMenuRequest(QPoint pos)
 
     if (ui->customPlot->selectedGraphs().size() > 0)
         menu->addAction("Remove selected graph", this, SLOT(removeSelectedGraph()));
+    menu->addAction("Export graph data", this, SLOT(exportSelectedGraph()));
     if (ui->customPlot->graphCount() > 0)
         menu->addAction("Remove all graphs", this, SLOT(removeAllGraphs()));
 
@@ -303,6 +353,23 @@ void MainWindow::selectionChanged()
         {
             item->setSelected(true);
             graph->setSelected(true);
+        }
+    }
+}
+
+void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *item)
+{
+    // Rename a graph by double clicking on its legend item
+    Q_UNUSED(legend)
+    if (item) // only react if item was clicked (user could have clicked on border padding of legend where there is no item, then item is 0)
+    {
+        QCPPlottableLegendItem *plItem = qobject_cast<QCPPlottableLegendItem*>(item);
+        bool ok;
+        QString newName = QInputDialog::getText(this, "QCustomPlot example", "New graph name:", QLineEdit::Normal, plItem->plottable()->name(), &ok);
+        if (ok)
+        {
+            plItem->plottable()->setName(newName);
+            ui->customPlot->replot();
         }
     }
 }
@@ -343,8 +410,9 @@ void MainWindow::waveType()
 
 void MainWindow::sampASPressed()
 {
-    QString ASsv = QString::number(ui->ASstartVolt->value(),'f',2);
-    QString ASpv = QString::number(ui->ASpeakVolt->value(),'f',2);
+    QString dead = serial.readAll();
+    QString ASsv = QString::number(ui->ASstartVolt->value(), 'f', 2);
+    QString ASpv = QString::number(ui->ASpeakVolt->value(), 'f', 2);
     QString ASsr = QString::number(ui->ASscanRate->value());
     QString wave = QString::number(waveNum);
     QString itr = QString::number(ui->ASiterations->value());
@@ -352,9 +420,13 @@ void MainWindow::sampASPressed()
     QString mainInstructions = ("anoStrip!"+ASsv+"@"+ASpv+"#"+ASsr+"$"+wave+"%"+itr+"^");
     serial.write(mainInstructions.toStdString().c_str());
 
+    qDebug() << mainInstructions;
+
     QTimer::singleShot(140, this, SLOT(preParse()));
 
     //ui->sampButton->setText(QString("Resample"));
+
+
 }
 
 
@@ -363,8 +435,9 @@ void MainWindow::sampASPressed()
 
 void MainWindow::sampCVPressed()
 {
-    QString CVsv = QString::number(ui->CVstartVolt->value(),'f',2);
-    QString CVpv = QString::number(ui->CVpeakVolt->value(),'f',2);
+    QString dead = serial.readAll();
+    QString CVsv = QString::number(ui->CVstartVolt->value(), 'f', 2);
+    QString CVpv = QString::number(ui->CVpeakVolt->value(), 'f', 2);
     QString CVsr = QString::number(ui->CVscanRate->value());
 
     QString mainInstructions = ("cycVolt!"+CVsv+"@"+CVpv+"#"+CVsr+"$"+"2%1^");
@@ -378,72 +451,119 @@ void MainWindow::sampCVPressed()
 
 void MainWindow::sampPAPressed()
 {
-    QString PApv = QString::number(ui->PApotVolt->value(),'f',2);
-    QString PAst = QString::number(ui->PAsampTime->value(),'f',2);
+    QString dead = serial.readAll();
+    QString PApv = QString::number(ui->PApotVolt->value(), 'f', 2);
+    QString PAst = QString::number(ui->PAsampTime->value(), 'f', 2);
 
     QString mainInstructions = ("potAmpero!"+PAst+"@"+PApv+"#$%1^");
     serial.write(mainInstructions.toStdString().c_str());
 
-    qDebug() << mainInstructions;
+    ui->customPlot->xAxis->setLabel("Microseconds (ms)");
+    ui->customPlot->yAxis->setLabel("Microamps (µA)");
 
+    qDebug() << mainInstructions;
+    timeValue = 0;
     QTimer::singleShot(140, this, SLOT(preParse()));
 
 }
 
 /*************************************************************************************************************/
-/***************************** READ DATA FROM SERIAL PORT AND GRAPH THE VALUES *******************************/
+/***************************** PREPARE FOR DATA TO BE READ FROM TEENSY ***************************************/
 /*************************************************************************************************************/
 
 void MainWindow::preParse() {
 
-    ui->customPlot->clearGraphs();
+    graphMemory = 0;
+
     ui->statusBar->showMessage(QString("Sampling..."));
 
     QString sampleBuf = serial.readLine();
     QString voltDivBuf = serial.readLine();
-    QString gainBuf = serial.readLine();
+    QString flipSampleBuf = serial.readLine();
 
     samples = sampleBuf.toInt();                                    //Teensy now sends the number of samples in the first line
     voltDiv = voltDivBuf.toFloat();
-    gain = gainBuf.toFloat();
+    flipSample = flipSampleBuf.toInt();
 
     qDebug() << samples;
     qDebug() << voltDiv;
-    qDebug() << gain;
+    qDebug() << flipSample;
+
     if (ui->toolBox2->currentIndex() == 1) {
-        QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
+        QTimer::singleShot(samples*600/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
     }
     else if (waveNum == 2 && ui->toolBox2->currentIndex()==0) {
-         //QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Should allow us to set up a timer trigger.
         timer = new QTimer(this);
-    
         connect(timer, SIGNAL(timeout()), this, SLOT(CVparseAndPlot()));
-        
-        timer->start((samples*1000/sampleRate)+140);
-    }
+        timer->start(samples*600/sampleRate);
 
+    }
+    else if (ui->toolBox2->currentIndex()==2) {
+        timer = new QTimer(this);
+        connect(timer, SIGNAL(timeout()), this, SLOT(readEverything()));
+        timer->start(100);
+        graphMemory = 0;
+
+    }
     else {
-        QTimer::singleShot(samples*1000/sampleRate, this, SLOT(parseAndPlot()));
+        QTimer::singleShot(samples*600/sampleRate, this, SLOT(parseAndPlot()));
     }
 }
 
+void MainWindow::pointPlot() {
+    ui->statusBar->showMessage(QString("Sampling..."));
+
+    QString sampleBuf = serial.readLine();
+    QString voltDivBuf = serial.readLine();
+    QString flipSampleBuf = serial.readLine();
+
+    samples = sampleBuf.toInt();                                    //Teensy now sends the number of samples in the first line
+    voltDiv = voltDivBuf.toFloat();
+    flipSample = flipSampleBuf.toInt();
+
+}
+
+void MainWindow::readEverything() {
+
+    if(serial.canReadLine()) {
+
+        QStringList everythingAvail = QString(serial.readAll()).split("\n");
+
+        //qDebug()<< everythingAvail.at(3).toDouble();
+
+        for(int i = 0; i < everythingAvail.length(); i++) {
+
+            graphMemory++;
+            double analogRead = everythingAvail.at(i).toDouble();
+            //qDebug() << analogRead;
+            ui->customPlot->graph()->addData(timeValue, analogRead);
+
+            timeValue += 1000/double(sampleRate);
+
+            if (graphMemory >= samples) {
+                timer->stop();
+            }
+
+        }
+        ui->customPlot->replot();
+    }
+}
+
+
+
+
+
+
+/*************************************************************************************************************/
+/***************************** READ DATA FROM SERIAL PORT AND GRAPH THE VALUES *******************************/
+/*************************************************************************************************************/
 void MainWindow::parseAndPlot()
 {
 
     QString inByteArray;
-    QString firstFiveDump;
-
-    for (int j = 0; j < 5; j++) {
-        firstFiveDump = serial.readLine();
-    }
-
-    if (samples > 4) {
-        samples -= 5;
-    }
 
     double x = 0;
     double y = 0;
-
 
     QVector<double> xValues(samples), yValues(samples);
 
@@ -460,72 +580,76 @@ void MainWindow::parseAndPlot()
     ui->customPlot->xAxis->setRange(-samples*1000/sampleRate*0.10, samples*1000/sampleRate*1.10);
 
     ui->customPlot->replot();
-    ui->statusBar->showMessage(QString("Sampling Done!"));
-    QString dead = serial.readAll();
 }
+
+/*************************************************************************************************************/
+/***************************** CYCLIC VOLTAMMETRY PARSING AND PLOTTING ***************************************/
+/*************************************************************************************************************/
 
 void MainWindow::CVparseAndPlot()
 {
     QString inByteArray;
-    QString firstFiveDump;
-
-    for (int j = 0; j < 5; j++) {
-        firstFiveDump = serial.readLine();
-    }
-
-    if (samples > 4) {
-        samples -= 5;
-    }
+    QPen pen;
 
     double potenApplied;
     double y = 0;
 
     if ((ui->toolBox2->currentIndex() == 1) ) {
         potenApplied = ui->CVstartVolt->value();
+        ui->customPlot->xAxis->setRange(ui->CVstartVolt->value()*1.1, ui->CVpeakVolt->value()*1.1);
     }
     else if(ui->toolBox2->currentIndex() == 0) {
         potenApplied = ui->ASstartVolt->value();
+        ui->customPlot->xAxis->setRange(ui->ASstartVolt->value()*1.1, ui->ASpeakVolt->value()*1.1);
     }
 
-    QVector<double> xValuesUp(samples/2), yValuesUp(samples/2);
-    QVector<double> xValuesDown(samples/2), yValuesDown(samples/2);
+    QVector<double> xValuesUp(flipSample), yValuesUp(flipSample);
+    QVector<double> xValuesDown(flipSample), yValuesDown(flipSample);
 
-
-    for (int i = 0; i<samples/2; i++) {
+    for (int i = 0; i<flipSample; i++) {
         inByteArray = serial.readLine();
         y = inByteArray.toDouble();
         xValuesUp[i] = potenApplied;
         yValuesUp[i] = y;
         potenApplied += voltDiv;
     }
+    qsrand(256);
+    int randomColorNumber = qrand() % 50;
+
     ui->customPlot->addGraph();
-    // rescale value (vertical) axis to fit the current data:        ui->customPlot->graph(2)->clearData();
-    ui->customPlot->graph(0)->setData(xValuesUp, yValuesUp);
+    ui->customPlot->graph()->setData(xValuesUp, yValuesUp);
+    pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+    ui->customPlot->graph()->setPen(pen);
     ui->customPlot->replot();
 
-    for (int i = 0; i<samples/2; i++) {
+    for (int i = 0; i<flipSample; i++) {
         inByteArray = serial.readLine();
         y = inByteArray.toDouble();
+        potenApplied -= voltDiv;
         xValuesDown[i] = potenApplied;
         yValuesDown[i] = y;
-        potenApplied -= voltDiv;
     }
 
     ui->customPlot->addGraph();
-    ui->customPlot->graph(1)->setData(xValuesDown, yValuesDown);
-    ui->customPlot->xAxis->setLabel("Volts (V)");
-    ui->customPlot->yAxis->setLabel("Microamps (µA)");
-    ui->customPlot->xAxis->setRange(-1.024, 1.024);
+    ui->customPlot->graph()->setData(xValuesDown, yValuesDown);
+    pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+    ui->customPlot->graph()->setPen(pen);
     ui->customPlot->yAxis->setRange(-10, 10);
     ui->customPlot->replot();
-    ui->statusBar->showMessage(QString("Sampling Done!"));
-    QString dead = serial.readAll();
-    
+
+    ui->statusBar->showMessage(QString("Sample #%1 done!").arg(count+1));
+
     count += 1;
-    
-    if (count > ui->ASiterations->value()) {
+
+    if (ui->toolBox2->currentIndex()==1) {
+        count = 0;
+        ui->statusBar->showMessage(QString("Sampling Done!"));
+    }
+
+    if (count >= ui->ASiterations->value() && waveNum == 2 && ui->toolBox2->currentIndex()==0) {
         count = 0;
         timer->stop();
+        ui->statusBar->showMessage(QString("Sampling Done!"));
     }
 }
 
@@ -581,13 +705,15 @@ void MainWindow::closeSelected()
 void MainWindow::resetAxis()
 {
 
-    ui->customPlot->xAxis->setRange(0, 1000*samples/sampleRate);
 
-    if (waveNum == 2 || ui->toolBox2->currentIndex() == 1) {
-        ui->customPlot->xAxis->setRange(-samples*1000/sampleRate*0.10, samples*1000/sampleRate*0.60);
+
+    if ((ui->toolBox2->currentIndex() == 0) || ui->toolBox2->currentIndex() == 1) {
+        ui->customPlot->xAxis->setLabel("Volts (V)");
+        ui->customPlot->yAxis->setLabel("Microamps (µA)");
     }
     else {
-        ui->customPlot->xAxis->setRange(-samples*1000/sampleRate*0.10, samples*1000/sampleRate*1.10);
+        ui->customPlot->yAxis->setLabel("Volts (V)");
+        ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     }
 
     ui->customPlot->replot();
@@ -602,32 +728,7 @@ void MainWindow::clearAllSelected()
 {
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
-}
-//------------------------------------------------------------------------------------------Fill Available Serial Ports
-
-void MainWindow::fillPortsInfo()
-{
-    //ui->serialPortInfoListBox->clear();
-    //static const QString blankString = QObject::tr("N/A");
-    //QString description;
-    //QString manufacturer;
-
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
-        QStringList list;
-        //description = info.description();
-        //manufacturer = info.manufacturer();
-        list << info.portName();
-        //<< (!description.isEmpty() ? description : blankString)
-        //<< (!manufacturer.isEmpty() ? manufacturer : blankString)
-        //<< info.systemLocation();
-
-        //ui->serialPortInfoListBox->addItem(list.first(), list);
-        for (int i = 0; i < list.size(); i++)
-        {
-            ui->menuSelect_Port->addAction(list.at(i));
-        }
-
-    }
+    QString dead = serial.readAll();
 }
 
 //--------------------------------------------------------------------------------------When 10microA Resolution Chosen
@@ -635,6 +736,7 @@ void MainWindow::fillPortsInfo()
 void MainWindow::res10ASelected()
 {
     serial.write("resolution!20@#$%^");
+
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
 
@@ -646,7 +748,7 @@ void MainWindow::res1000nASelected()
 {
     serial.write("resolution!2000@#$%^");
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
-    ui->customPlot->yAxis->setLabel("Microamps (µA)");
+    ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
 }
 
 //-----------------------------------------------------------------------------------------When 100nA Resolution Chosen

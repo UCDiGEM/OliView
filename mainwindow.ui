@@ -29,7 +29,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -215,7 +215,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -355,7 +355,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -448,7 +448,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -484,7 +484,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -494,9 +494,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true">
-      <zorder>toolBox2</zorder>
-     </widget>
+     <widget class="QCustomPlot" name="customPlot" native="true"/>
     </item>
    </layout>
   </widget>
@@ -507,7 +505,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSerial_Port">
