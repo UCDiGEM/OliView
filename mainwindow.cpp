@@ -172,7 +172,7 @@ void MainWindow::setUpComPort()
         serial.setFlowControl(QSerialPort::NoFlowControl);
         ui->statusBar->showMessage(QString("COM Port Successfully Linked"));
         serial.write("changeSampleRate!2000@#$%^");                            //Set default Sampling Rate
-        serial.write("resolution!20@#$%^");                                    //Set default Resolution
+        serial.write("resolution!1@#$%^");                                    //Set default Resolution
     }
 
     else
@@ -320,11 +320,13 @@ void MainWindow::contextMenuRequest(QPoint pos)
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WA_DeleteOnClose);
 
-    if (ui->customPlot->selectedGraphs().size() > 0)
+    if (ui->customPlot->selectedGraphs().size() > 0) {
+        menu->addAction("Export graph data", this, SLOT(exportSelectedGraph()));
         menu->addAction("Remove selected graph", this, SLOT(removeSelectedGraph()));
-    menu->addAction("Export graph data", this, SLOT(exportSelectedGraph()));
+     }
     if (ui->customPlot->graphCount() > 0)
         menu->addAction("Remove all graphs", this, SLOT(removeAllGraphs()));
+
 
     menu->popup(ui->customPlot->mapToGlobal(pos));
 }
@@ -377,6 +379,8 @@ void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *ite
         }
     }
 }
+
+
 
 //--------------------------------------------------------------------------------------Functionality of Clicking Graph
 
@@ -457,9 +461,6 @@ void MainWindow::sampPAPressed()
     QString mainInstructions = ("potAmpero!"+PAst+"@"+PApv+"#$%1^");
     serial.write(mainInstructions.toStdString().c_str());
 
-    ui->customPlot->xAxis->setLabel("Microseconds (ms)");
-    ui->customPlot->yAxis->setLabel("Microamps (µA)");
-
     qDebug() << mainInstructions;
 
     QTimer::singleShot(250, this, SLOT(preParse()));
@@ -472,6 +473,7 @@ void MainWindow::sampPAPressed()
 
 void MainWindow::preParse() {
 
+    this->setCursor(QCursor(Qt::BusyCursor));
 
     ui->statusBar->showMessage(QString("Sampling..."));
 
@@ -488,12 +490,12 @@ void MainWindow::preParse() {
     qDebug() << flipSample;
 
     if (ui->toolBox2->currentIndex() == 1) {
-        QTimer::singleShot(samples*600/sampleRate, this, SLOT(CVparseAndPlot()));  //Cylic Voltammetry
+        QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Cylic Voltammetry
     }
     else if (waveNum == 2 && ui->toolBox2->currentIndex()==0) {    //Anodic Stripping, triangle wave
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(CVparseAndPlot()));
-        timer->start(samples*600/sampleRate);
+        timer->start(samples*1000/sampleRate);
 
     }
     else if (ui->toolBox2->currentIndex()==2) {                    // Potentiostatic Amperometry
@@ -539,9 +541,9 @@ void MainWindow::pointPlot() {
 
 void MainWindow::readEverything() {
 
-    everythingAvail.append(QString(serial.readAll()).split("\n"));
+    everythingAvail = (QString(serial.readAll()).split("\n"));
 
-    //qDebug()<< everythingAvail.at(3).toDouble();
+    //qDebug()<< everythingAvail;
 
     for(int i = 0; i < everythingAvail.length(); i++) {
         if (everythingAvail.at(i).size() == 10) {
@@ -556,7 +558,8 @@ void MainWindow::readEverything() {
             timeValue += 1000/double(sampleRate);
 
             if (graphMemory+50 >= samples) {
-                QObject::disconnect(&serial, SIGNAL(readyRead()), this, SLOT(readEverything()));
+                QObject::disconnect(this, SIGNAL(readyRead()), this, SLOT(readEverything()));
+                //disconnect(&mSslSocket, &QSslSocket::readyRead, this, &NetworkManager::onSslData);
                 everythingAvail = QStringList();
             }
         }
@@ -567,11 +570,6 @@ void MainWindow::readEverything() {
     }
     ui->customPlot->replot();
 }
-
-
-
-
-
 
 
 /*************************************************************************************************************/
@@ -593,6 +591,9 @@ void MainWindow::parseAndPlot()
         y = inByteArray.toDouble();
         xValues[i] = x;
         yValues[i] = y;
+
+                        //LowPass Filter
+
         x += 1000/double(sampleRate);
     }
 
@@ -601,6 +602,9 @@ void MainWindow::parseAndPlot()
     ui->customPlot->xAxis->setRange(-samples*1000/sampleRate*0.10, samples*1000/sampleRate*1.10);
 
     ui->customPlot->replot();
+
+    ui->statusBar->showMessage(QString("Sampling Done!"));
+    this->setCursor(QCursor(Qt::ArrowCursor));
 }
 
 /*************************************************************************************************************/
@@ -669,12 +673,15 @@ void MainWindow::CVparseAndPlot()
     if (ui->toolBox2->currentIndex()==1) {
         count = 0;
         ui->statusBar->showMessage(QString("Sampling Done!"));
+        this->setCursor(QCursor(Qt::ArrowCursor));
     }
 
     if (count >= ui->ASiterations->value() && waveNum == 2 && ui->toolBox2->currentIndex()==0) {
         count = 0;
         timer->stop();
         ui->statusBar->showMessage(QString("Sampling Done!"));
+        this->setCursor(QCursor(Qt::ArrowCursor));
+
     }
 }
 
@@ -730,8 +737,6 @@ void MainWindow::closeSelected()
 void MainWindow::resetAxis()
 {
 
-
-
     if ((ui->toolBox2->currentIndex() == 0) || ui->toolBox2->currentIndex() == 1) {
         ui->customPlot->xAxis->setLabel("Volts (V)");
         ui->customPlot->yAxis->setLabel("Microamps (µA)");
@@ -744,13 +749,14 @@ void MainWindow::resetAxis()
     ui->customPlot->replot();
 
     //serial.close();
-    //
+
 }
 
 //-------------------------------------------------------------------------------------------Functionality of Clear All
 
 void MainWindow::clearAllSelected()
 {
+    QString dead = serial.readAll();
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
 }
@@ -759,10 +765,12 @@ void MainWindow::clearAllSelected()
 
 void MainWindow::res10ASelected()
 {
-    serial.write("resolution!20@#$%^");
+    serial.write("resolution!1@#$%^");
 
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
+    ui->customPlot->yAxis->setRange(-10,10);
+
 
 }
 
@@ -770,23 +778,28 @@ void MainWindow::res10ASelected()
 
 void MainWindow::res1000nASelected()
 {
-    serial.write("resolution!2000@#$%^");
+    serial.write("resolution!2@#$%^");
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
+    ui->customPlot->yAxis->setRange(-1000,1000);
 }
 
 //-----------------------------------------------------------------------------------------When 100nA Resolution Chosen
 
 void MainWindow::res100nASelected()
 {
-    serial.write("resolution!200@#$%^");
+    serial.write("resolution!3@#$%^");
+    ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
+    ui->customPlot->yAxis->setRange(-100,100);
 }
 
 //------------------------------------------------------------------------------------------When 10nA Resolution Chosen
 
 void MainWindow::res10nASelected()
 {
-    serial.write("resolution!20@#$%^");
+    serial.write("resolution!4@#$%^");
+    ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
+    ui->customPlot->yAxis->setRange(-10,10);
 }
 
 /*************************************************************************************************************/
