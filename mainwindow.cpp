@@ -519,8 +519,6 @@ void MainWindow::preParse() {
     }
 }
 
-<<<<<<< HEAD
-
 void MainWindow::pointPlot() {
 
     /*everythingAvail.append(serial.readAll());
