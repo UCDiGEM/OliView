@@ -30,6 +30,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include "qcustomplot.h" // the header file of QCustomPlot
+#include "Biquad.h"
 
 namespace Ui {
 class MainWindow;
@@ -43,20 +44,27 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
-    void setupWaveTypes();
-    void setupAldeSensGraph(QCustomPlot *customPlot);
-    void setUpComPort();
+
     QTimer *timer;
 
 private slots:
+    void setupWaveTypes();
+    void setupAldeSensGraph(QCustomPlot *customPlot);
+
+    void setUpComPort();
+    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
     void waveType();
     void fillPortsInfo();
     void preParse();
+    void pointPlot();
+    void readEverything();
+
     void parseAndPlot();
     void CVparseAndPlot();
     void mouseWheel();
     void mousePress();
     void removeSelectedGraph();
+    void exportSelectedGraph();
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
     void selectionChanged();
@@ -80,13 +88,16 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    int samples;
+    QString teensyPort;
+    QStringList everythingAvail;
+    quint32 samples;
     int sampleRate;
     float gain;
     float voltDiv;
     int graphMemory;
-    int sampleNumber;
-    
+    double timeValue;
+    QElapsedTimer elapsedTimer;
+    quint32 flipSample;
     int waveNum;
     int count;
 

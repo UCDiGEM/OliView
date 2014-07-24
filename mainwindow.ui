@@ -29,7 +29,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -215,7 +215,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -355,7 +355,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -414,6 +414,9 @@
         <property name="singleStep">
          <double>0.010000000000000</double>
         </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
        </widget>
        <widget class="QLabel" name="label_12">
         <property name="geometry">
@@ -441,6 +444,19 @@
          <string>Sample</string>
         </property>
        </widget>
+       <widget class="QPushButton" name="Filter">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>160</y>
+          <width>107</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Filter</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="toolBoxPage4_2">
        <property name="geometry">
@@ -448,7 +464,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -484,7 +500,7 @@
          <x>0</x>
          <y>0</y>
          <width>250</width>
-         <height>417</height>
+         <height>460</height>
         </rect>
        </property>
        <attribute name="label">
@@ -494,9 +510,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true">
-      <zorder>toolBox2</zorder>
-     </widget>
+     <widget class="QCustomPlot" name="customPlot" native="true"/>
     </item>
    </layout>
   </widget>
@@ -507,7 +521,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSerial_Port">
@@ -552,8 +566,9 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionClose"/>
+    <addaction name="actionExport_All_2"/>
     <addaction name="separator"/>
+    <addaction name="actionClose"/>
     <addaction name="actionAbout_Us"/>
    </widget>
    <addaction name="menuFile"/>
@@ -650,6 +665,16 @@
   <action name="actionAsdf">
    <property name="text">
     <string>asdf</string>
+   </property>
+  </action>
+  <action name="actionExport_All">
+   <property name="text">
+    <string>Export All</string>
+   </property>
+  </action>
+  <action name="actionExport_All_2">
+   <property name="text">
+    <string>Export All</string>
    </property>
   </action>
  </widget>
