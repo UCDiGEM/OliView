@@ -214,8 +214,13 @@
         <rect>
          <x>0</x>
          <y>0</y>
+<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
+=======
+         <width>98</width>
+         <height>28</height>
+>>>>>>> origin/master
         </rect>
        </property>
        <attribute name="label">
@@ -463,8 +468,13 @@
         <rect>
          <x>0</x>
          <y>0</y>
+<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
+=======
+         <width>98</width>
+         <height>28</height>
+>>>>>>> origin/master
         </rect>
        </property>
        <attribute name="label">
@@ -499,8 +509,13 @@
         <rect>
          <x>0</x>
          <y>0</y>
+<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
+=======
+         <width>98</width>
+         <height>28</height>
+>>>>>>> origin/master
         </rect>
        </property>
        <attribute name="label">

@@ -90,14 +90,22 @@ private:
     Ui::MainWindow *ui;
     QString teensyPort;
     QStringList everythingAvail;
+<<<<<<< HEAD
     quint32 samples;
+=======
+    int samples;
+>>>>>>> origin/master
     int sampleRate;
     float gain;
     float voltDiv;
     int graphMemory;
     double timeValue;
     QElapsedTimer elapsedTimer;
+<<<<<<< HEAD
     quint32 flipSample;
+=======
+    int flipSample;
+>>>>>>> origin/master
     int waveNum;
     int count;
 
