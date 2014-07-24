@@ -214,13 +214,9 @@
         <rect>
          <x>0</x>
          <y>0</y>
-<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
-=======
-         <width>98</width>
-         <height>28</height>
->>>>>>> origin/master
+
         </rect>
        </property>
        <attribute name="label">
@@ -468,13 +464,9 @@
         <rect>
          <x>0</x>
          <y>0</y>
-<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
-=======
-         <width>98</width>
-         <height>28</height>
->>>>>>> origin/master
+
         </rect>
        </property>
        <attribute name="label">
@@ -509,13 +501,9 @@
         <rect>
          <x>0</x>
          <y>0</y>
-<<<<<<< HEAD
          <width>250</width>
          <height>460</height>
-=======
-         <width>98</width>
-         <height>28</height>
->>>>>>> origin/master
+
         </rect>
        </property>
        <attribute name="label">
@@ -647,11 +635,6 @@
     <string>10000 Hz</string>
    </property>
   </action>
-  <action name="actionPortNames">
-   <property name="text">
-    <string>PortNamesGoHere</string>
-   </property>
-  </action>
   <action name="actionClose">
    <property name="text">
     <string>Close</string>
@@ -660,31 +643,6 @@
   <action name="actionAbout_Us">
    <property name="text">
     <string>About Us</string>
-   </property>
-  </action>
-  <action name="actionHello">
-   <property name="text">
-    <string>hello</string>
-   </property>
-  </action>
-  <action name="actionWork">
-   <property name="text">
-    <string>work</string>
-   </property>
-  </action>
-  <action name="actionHello_2">
-   <property name="text">
-    <string>hello</string>
-   </property>
-  </action>
-  <action name="actionAsdf">
-   <property name="text">
-    <string>asdf</string>
-   </property>
-  </action>
-  <action name="actionExport_All">
-   <property name="text">
-    <string>Export All</string>
    </property>
   </action>
   <action name="actionExport_All_2">
