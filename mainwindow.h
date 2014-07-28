@@ -65,6 +65,7 @@ private slots:
     void mousePress();
     void removeSelectedGraph();
     void exportSelectedGraph();
+    void filterSelectedGraph();
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
     void selectionChanged();
@@ -99,6 +100,10 @@ private:
     double timeValue;
     QElapsedTimer elapsedTimer;
     quint32 flipSample;
+
+    int readEverything_count;
+    QString readEverything_containerStart;
+    QString readEverything_container;
 
     int waveNum;
     int count;
