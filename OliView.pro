@@ -12,10 +12,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
            mainwindow.cpp \
-         qcustomplot.cpp
+         qcustomplot.cpp \
+biquad.cpp
 
 HEADERS  += mainwindow.h \
-         qcustomplot.h
+         qcustomplot.h \
+        biquad.h
 
 FORMS    += mainwindow.ui
 
