@@ -65,6 +65,7 @@ private slots:
     void mousePress();
     void removeSelectedGraph();
     void exportSelectedGraph();
+    void exportAll();
     void filterSelectedGraph();
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
