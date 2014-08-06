@@ -74,6 +74,8 @@ private slots:
     void sampPAPressed();
     void sampCVPressed();
     void resetAxis();
+    void resetGraphNames();
+
     void clearAllSelected();
     void closeSelected();
     void disconnectSelected();
