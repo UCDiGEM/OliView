@@ -74,8 +74,12 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(ui->reconButton, SIGNAL(clicked()), this, SLOT(reconnectButtonPressed()));
     //connect(ui->clrButton, SIGNAL(clicked()), this, SLOT(clearButtonPressed()));
     connect(ui->ASwaveType, SIGNAL(activated(int)), this, SLOT(waveType()));
+    connect(ui->filterButton, SIGNAL(clicked()), this, SLOT(filterSelectedGraph()));
 
     connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetAxis()));
+    connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetGraphNames()));
+    connect(ui->freqDial, SIGNAL(sliderMoved(int)), ui->freqSpinBox, SLOT(setValue(int)));
+    connect(ui->freqSpinBox, SIGNAL(valueChanged(int)), ui->freqDial, SLOT(setValue(int)));
 
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
     connect(ui->action_10_nA, SIGNAL(triggered()), this, SLOT(res10nASelected()));
@@ -118,6 +122,11 @@ void MainWindow::setupWaveTypes()
     ui->ASwaveType->insertItem(2, triangleWave,(const char *) 0);
     ui->ASwaveType->setIconSize(QSize(100,28));
     ui->ASwaveType->setCurrentIndex(0);
+
+    ui->filterType->insertItem(0,"Low Pass");
+    ui->filterType->insertItem(1,"Notch");
+
+
 }
 
 
@@ -308,37 +317,70 @@ void MainWindow::exportSelectedGraph() {
 void MainWindow::exportAll() {
 
 
-        for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
+    for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
 
-            QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", ui->customPlot->graph(j)->name(), "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
-            QFile data(filename);
-            if(data.open(QFile::WriteOnly |QFile::Truncate))
-            {
-                QTextStream output(&data);
-                const QCPDataMap *dataMap = ui->customPlot->graph(j)->data();
-                QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+        QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", ui->customPlot->graph(j)->name(), "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
+        QFile data(filename);
+        if(data.open(QFile::WriteOnly |QFile::Truncate))
+        {
+            QTextStream output(&data);
+            const QCPDataMap *dataMap = ui->customPlot->graph(j)->data();
+            QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
 
-                output << "x Value, y Value" << endl;
-                while (i != dataMap->constEnd()) {
-                    output << i.value().key << ", " << i.value().value << endl;
-                    ++i;
-                }
+            output << "x Value, y Value" << endl;
+            while (i != dataMap->constEnd()) {
+                output << i.value().key << ", " << i.value().value << endl;
+                ++i;
             }
         }
     }
+}
 
 void MainWindow::filterSelectedGraph() {
 
-    if (ui->customPlot->selectedGraphs().size() > 0)
-    {
-        QVector<double> xValues(samples), yValues(samples);
+    double frequency = double(ui->freqSpinBox->value());
 
-        const QCPDataMap *dataMap = ui->customPlot->selectedGraphs().first()->data();
+    Biquad *filter;
+
+    if(ui->customPlot->graphCount() > 0 ) {
+
+        if (ui->filterType->currentIndex() == 0) {
+            filter = new Biquad(bq_type_lowpass, frequency / sampleRate, 0.707, 0);
+        }
+        else if(ui->filterType->currentIndex() == 1) {
+            filter = new Biquad(bq_type_notch, frequency / sampleRate, 0.707, 0);
+        }
+
+        //Biquad *filter1 = new Biquad(bq_type_lowpass, frequency / sampleRate, 0.707, 0);
+
+        //int sampleNumber = ui->customPlot->graph(ui->graphNames->currentIndex())->keyAxis()->range().size();
+
+        int sampleNumber = 2000;
+        qDebug() << ui->graphNames->currentIndex();
+
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+        int counter = 0;
+
+        const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames->currentIndex())->data();
         QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
         while (i != dataMap->constEnd()) {
-            qDebug() << i.value().key << ": " << i.value().value << endl;
+            xValues[counter] = i.value().key;
+            yValues[counter] = filter->process(i.value().value);
+            counter++;
             ++i;
         }
+
+        QPen pen;
+        ui->customPlot->addGraph();
+        int randomColorNumber = ui->customPlot->graphCount();
+        pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+        ui->customPlot->graph()->setPen(pen);
+        ui->customPlot->graph()->setData(xValues, yValues);
+
+        ui->customPlot->replot();
+        ui->statusBar->showMessage(QString("Graph Filtered"));
+
+        resetGraphNames();
     }
 }
 
@@ -390,7 +432,7 @@ void MainWindow::selectionChanged()
         ui->customPlot->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
     }
 
-    // synchronize selection of graphs with selection of corresponding legend items:
+    // synchronize selection of graphs with selection of corresponding legend items and filter box:
     for (int i=0; i<ui->customPlot->graphCount(); ++i)
     {
         QCPGraph *graph = ui->customPlot->graph(i);
@@ -495,7 +537,7 @@ void MainWindow::sampPAPressed()
 
     qDebug() << mainInstructions;
 
-    QTimer::singleShot(250, this, SLOT(preParse()));
+    QTimer::singleShot(150, this, SLOT(preParse()));
 
 }
 
@@ -538,8 +580,7 @@ void MainWindow::preParse() {
         ui->customPlot->addGraph();
         timeValue = 0;
         graphMemory = 0;
-        ui->statusBar->showMessage(QString("Sampling..."));
-readEverything_first = 1;*/
+        ui->statusBar->showMessage(QString("Sampling..."));*/
 
     }
     else {
@@ -575,47 +616,56 @@ void MainWindow::readEverything() {
 
     everythingAvail = (QString(serial.readAll()).split("\n"));
 
-    //qDebug()<< everythingAvail;
+    //qDebug() << everythingAvail.at(everythingAvail.begin());
 
-    /*
-    if (everythingAvail.end() < 10){
-    readEverything_containerStart = everythingAvail.end();
-    }
 
-    if (readEverything_count == 0) {
-        everythingAvail.end().append();
-    }
 
     for(int i = 0; i < everythingAvail.length(); i++) {
-        if (everythingAvail.at(i).size() == 10) {
 
-            qDebug() << everythingAvail.at(i).size();
+        if (everythingAvail.at(everythingAvail.length()-1).size() < 9){
+            readEverything_container = everythingAvail.at(i);
 
-            graphMemory++;
-            double analogRead = everythingAvail.at(i).toDouble();
-            //qDebug() << analogRead;
-            ui->customPlot->graph()->addData(timeValue, analogRead);
-
-            timeValue += 1000/double(sampleRate);
-
-            if (graphMemory+50 >= (int)samples) {
-                QObject::disconnect(this, SIGNAL(readyRead()), this, SLOT(readEverything()));
-                //disconnect(&mSslSocket, &QSslSocket::readyRead, this, &NetworkManager::onSslData);
-                everythingAvail = QStringList();
-            }
         }
 
-        // Conditioning for samples that get cut-off
-        else if (everythingAvail.at(i).size() < 10 && ) {
+        /*if (everythingAvail.at(i).size() < 9){
+            readEverything_container = everythingAvail.at(i);
+
+            //qDebug() << everythingAvail.at(i);
+        }
+
+        else if (everythingAvail.at(i).size() < 9) {
+             timeValue += 1000/double(sampleRate);
              readEverything_containerStart = everythingAvail.at(i);
+             readEverything_containerStart.append(readEverything_container);
+             ui->customPlot->graph()->addData(timeValue, readEverything_containerStart.toDouble());
+             graphMemory++;
+             //qDebug() << everythingAvail.at(i).size();
+             //qDebug() << "i :" + QString(i);
+         }
+
+        else {*/
+        //qDebug() << everythingAvail.at(i).size();
+
+        graphMemory++;
+        ui->customPlot->graph()->addData(timeValue, everythingAvail.at(i).toDouble());
+
+        timeValue += 1000/double(sampleRate);
+
+        qDebug() << graphMemory;
+
+        if (graphMemory >= (int)samples) {
+            QObject::disconnect(&serial, SIGNAL(readyRead()), this, SLOT(readEverything()));
+            everythingAvail = QStringList();
+
+            ui->statusBar->showMessage(QString("Sampling Done!"));
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            //}
+
+            // Conditioning for samples that get cut-off
+
+
         }
-        else if (everythingAvail.at(i).size() < 10 && readEverything_count != 1); {
-             readEverything_container = everythingAvail.at(i);
-        }
-
-    }*/
-
-
+    }
     //readEverything_count++;
     ui->customPlot->replot();
 }
@@ -624,16 +674,13 @@ void MainWindow::readEverything() {
 /*************************************************************************************************************/
 /***************************** READ DATA FROM SERIAL PORT AND GRAPH THE VALUES *******************************/
 /*************************************************************************************************************/
-void MainWindow::parseAndPlot()
-{
+void MainWindow::parseAndPlot() {
 
     QString inByteArray;
     QPen pen;
 
     double x = 0;
     double y = 0;
-
-    //Biquad *filter1 = new Biquad(bq_type_notch, 25.0 / sampleRate, 0.707, 0);
 
     QVector<double> xValues(samples), yValues(samples);
 
@@ -648,16 +695,13 @@ void MainWindow::parseAndPlot()
         xValues[i] = x;
 
         yValues[i] = y;
-        //yValues[i] = filter1->process(y);
-
         //LowPass Filter
-
 
         x += 1000/double(sampleRate);
     }
 
     ui->customPlot->addGraph();
-    int randomColorNumber = ui->customPlot->graphCount();
+    int randomColorNumber = ui->customPlot->graphCount()+3;
     pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
     ui->customPlot->graph()->setPen(pen);
     ui->customPlot->graph()->setData(xValues, yValues);
@@ -795,6 +839,22 @@ void MainWindow::resetAxis()
     ui->customPlot->replot();
 
     //serial.close();
+}
+
+void MainWindow::resetGraphNames()
+{
+
+    for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
+        ui->graphNames->insertItem(j, ui->customPlot->graph(j)->name());
+
+
+    }
+
+    ui->graphNames->setMaxCount(ui->customPlot->graphCount()+1);
+
+    ui->customPlot->replot();
+
+    //serial.close();
 
 }
 
@@ -805,6 +865,7 @@ void MainWindow::clearAllSelected()
     QString dead = serial.readAll();
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
+    resetGraphNames();
 }
 
 //--------------------------------------------------------------------------------------When 10microA Resolution Chosen
@@ -817,6 +878,7 @@ void MainWindow::res10ASelected()
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
     ui->customPlot->yAxis->setRange(-10,10);
+    ui->customPlot->replot();
 
 
 }
@@ -830,6 +892,7 @@ void MainWindow::res1000nASelected()
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
     ui->customPlot->yAxis->setRange(-1000,1000);
+    ui->customPlot->replot();
 }
 
 //-----------------------------------------------------------------------------------------When 100nA Resolution Chosen
@@ -840,6 +903,7 @@ void MainWindow::res100nASelected()
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
     ui->customPlot->yAxis->setRange(-100,100);
+    ui->customPlot->replot();
 }
 
 //------------------------------------------------------------------------------------------When 10nA Resolution Chosen
@@ -850,6 +914,7 @@ void MainWindow::res10nASelected()
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
     ui->customPlot->yAxis->setRange(-10,10);
+    ui->customPlot->replot();
 }
 
 /*************************************************************************************************************/
