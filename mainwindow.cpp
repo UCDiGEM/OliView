@@ -81,6 +81,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->freqDial, SIGNAL(sliderMoved(int)), ui->freqSpinBox, SLOT(setValue(int)));
     connect(ui->freqSpinBox, SIGNAL(valueChanged(int)), ui->freqDial, SLOT(setValue(int)));
 
+    connect(ui->qualDial, SIGNAL(sliderMoved(int)), this, SLOT(qualityCorrectSpin(int)));
+    connect(ui->qualSpinBox, SIGNAL(valueChanged(double)), this, SLOT(qualityCorrectDial(double)));
+
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
     connect(ui->action_10_nA, SIGNAL(triggered()), this, SLOT(res10nASelected()));
     connect(ui->action_100_nA, SIGNAL(triggered()), this, SLOT(res100nASelected()));
@@ -129,6 +132,18 @@ void MainWindow::setupWaveTypes()
 
 }
 
+void MainWindow::qualityCorrectDial(double newValue) {
+    int newValueInt = qRound(1000.0*log((1.0+newValue)));
+    qDebug() << newValueInt;
+    ui->qualDial->setValue(newValueInt);
+}
+
+void MainWindow::qualityCorrectSpin(int newValue) {
+    double newValueDouble = qExp(newValue/1000.0)-1.0;
+    qDebug() << newValueDouble;
+    ui->qualSpinBox->setValue(newValueDouble);
+
+}
 
 /*************************************************************************************************************/
 /******************************* INITIALIZE ALL SERIAL PORT DATA FOR SAMPLING ********************************/
@@ -289,6 +304,7 @@ void MainWindow::removeSelectedGraph()
     {
         ui->customPlot->removeGraph(ui->customPlot->selectedGraphs().first());
         ui->customPlot->replot();
+        resetGraphNames();
     }
 }
 
@@ -388,6 +404,7 @@ void MainWindow::filterSelectedGraph() {
 
 void MainWindow::removeAllGraphs()
 {
+    resetGraphNames();
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
 }
@@ -676,6 +693,16 @@ void MainWindow::readEverything() {
 /*************************************************************************************************************/
 void MainWindow::parseAndPlot() {
 
+    Biquad *filter = new Biquad(bq_type_lowpass, (sampleRate/100.0) / sampleRate, 50.0, 0);
+    qDebug() << (sampleRate/100.0) / sampleRate;
+
+    Biquad *filter1 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter2 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter3 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter4 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter5 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter6 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+
     QString inByteArray;
     QPen pen;
 
@@ -694,7 +721,7 @@ void MainWindow::parseAndPlot() {
         y = inByteArray.toDouble();
         xValues[i] = x;
 
-        yValues[i] = y;
+        yValues[i] = filter1->process(filter2->process(filter3->process(filter4->process(filter5->process(filter6->process(filter->process(y)))))));
         //LowPass Filter
 
         x += 1000/double(sampleRate);
@@ -724,6 +751,15 @@ void MainWindow::CVparseAndPlot()
     double voltMark;
     double y = 0;
 
+
+    if ((ui->toolBox2->currentIndex() == 1) ) {
+        ui->customPlot->xAxis->setRange(ui->CVstartVolt->value()*1.1, ui->CVpeakVolt->value()*1.1);
+    }
+    else if(ui->toolBox2->currentIndex() == 0) {
+        ui->customPlot->xAxis->setRange(ui->ASstartVolt->value()*1.1, ui->ASpeakVolt->value()*1.1);
+    }
+
+
     QVector<double> xValuesUp(samples), yValuesUp(samples);
 
     for (quint32 i = 0; i<samples; i++) {
@@ -737,21 +773,23 @@ void MainWindow::CVparseAndPlot()
         yValuesUp[i] = y;
     }
 
-    int randomColorNumber = count;
+    int randomColorNumber = ui->customPlot->graphCount()+3;
 
     ui->customPlot->addGraph();
-    //ui->customPlot->graph()->setLineStyle(QCPGraph::lsNone);
-    ui->customPlot->graph()->setScatterStyle(QCPScatterStyle::ssSquare);
 
     ui->customPlot->graph()->setData(xValuesUp, yValuesUp);
-    pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
-    ui->customPlot->graph()->setPen(pen);
+
+    QCPScatterStyle scatterVolt;
+    scatterVolt.setSize(2.0);
+
+    scatterVolt.setPen(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+    ui->customPlot->graph()->setScatterStyle(scatterVolt);
     ui->customPlot->replot();
 
     ui->customPlot->graph()->setLineStyle(QCPGraph::lsNone);
-    //ui->customPlot->graph()->setScatterStyle(QCPScatterStyle::ssDisc);
+    ui->customPlot->graph()->setScatterStyle(QCPScatterStyle::ssDisc);
 
-    ui->customPlot->graph()->setPen(pen);
+
     ui->customPlot->graph()->rescaleValueAxis(true);
 
     ui->customPlot->replot();
@@ -829,10 +867,8 @@ void MainWindow::resetAxis()
 
     if ((ui->toolBox2->currentIndex() == 0) || ui->toolBox2->currentIndex() == 1) {
         ui->customPlot->xAxis->setLabel("Volts (V)");
-        ui->customPlot->yAxis->setLabel("Microamps (µA)");
     }
     else {
-        ui->customPlot->yAxis->setLabel("Microamps (µA)");
         ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     }
 
@@ -846,12 +882,15 @@ void MainWindow::resetGraphNames()
 
     for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
         ui->graphNames->insertItem(j, ui->customPlot->graph(j)->name());
-
-
     }
 
-    ui->graphNames->setMaxCount(ui->customPlot->graphCount()+1);
-
+    qDebug() << ui->customPlot->graphCount();
+    if (ui->customPlot->graphCount() == 1){
+        ui->graphNames->setMaxCount(ui->customPlot->graphCount());
+    }
+    else{
+        ui->graphNames->setMaxCount(ui->customPlot->graphCount()+1);
+    }
     ui->customPlot->replot();
 
     //serial.close();
