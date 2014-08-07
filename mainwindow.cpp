@@ -78,8 +78,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetAxis()));
     connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetGraphNames()));
-    //connect(ui->freqDial, SIGNAL(sliderMoved(int)), ui->freqSpinBox, SLOT(setValue(int));
-    //connect(ui->freqSpinBox, SIGNAL(valueChanged(int)), ui->freqDial, SLOT(setValue(int));
+    connect(ui->freqDial, SIGNAL(sliderMoved(int)), ui->freqSpinBox, SLOT(setValue(int)));
+    connect(ui->freqSpinBox, SIGNAL(valueChanged(int)), ui->freqDial, SLOT(setValue(int)));
 
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
     connect(ui->action_10_nA, SIGNAL(triggered()), this, SLOT(res10nASelected()));
@@ -338,36 +338,50 @@ void MainWindow::exportAll() {
 
 void MainWindow::filterSelectedGraph() {
 
-    if (ui->graphNames->currentIndex() == 0) {
-        Biquad *filter1 = new Biquad(bq_type_lowpass, ui->freqSpinBox->value() / sampleRate, 0.707, 0);
+    double frequency = double(ui->freqSpinBox->value());
+
+    Biquad *filter;
+
+    if(ui->customPlot->graphCount() > 0 ) {
+
+        if (ui->filterType->currentIndex() == 0) {
+            filter = new Biquad(bq_type_lowpass, frequency / sampleRate, 0.707, 0);
+        }
+        else if(ui->filterType->currentIndex() == 1) {
+            filter = new Biquad(bq_type_notch, frequency / sampleRate, 0.707, 0);
+        }
+
+        //Biquad *filter1 = new Biquad(bq_type_lowpass, frequency / sampleRate, 0.707, 0);
+
+        //int sampleNumber = ui->customPlot->graph(ui->graphNames->currentIndex())->keyAxis()->range().size();
+
+        int sampleNumber = 2000;
+        qDebug() << ui->graphNames->currentIndex();
+
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+        int counter = 0;
+
+        const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames->currentIndex())->data();
+        QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+        while (i != dataMap->constEnd()) {
+            xValues[counter] = i.value().key;
+            yValues[counter] = filter->process(i.value().value);
+            counter++;
+            ++i;
+        }
+
+        QPen pen;
+        ui->customPlot->addGraph();
+        int randomColorNumber = ui->customPlot->graphCount();
+        pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+        ui->customPlot->graph()->setPen(pen);
+        ui->customPlot->graph()->setData(xValues, yValues);
+
+        ui->customPlot->replot();
+        ui->statusBar->showMessage(QString("Graph Filtered"));
+
+        resetGraphNames();
     }
-    else if(ui->graphNames->currentIndex() == 1) {
-        Biquad *filter2 = new Biquad(bq_type_notch, ui->freqSpinBox->value() / sampleRate, 0.707, 0);
-    }
-
-    Biquad *filter1 = new Biquad(bq_type_lowpass, ui->freqSpinBox->value() / sampleRate, 0.707, 0);
-
-    QVector<double> xValues(samples), yValues(samples);
-    int counter = 0;
-
-    const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames->currentIndex())->data();
-    QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
-    while (i != dataMap->constEnd()) {
-        counter++;
-        xValues[counter] = i.value().key;
-        yValues[counter] = filter1->process(i.value().value);
-        ++i;
-    }
-
-    QPen pen;
-    ui->customPlot->addGraph();
-    int randomColorNumber = ui->customPlot->graphCount();
-    pen.setColor(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
-    ui->customPlot->graph()->setPen(pen);
-    ui->customPlot->graph()->setData(xValues, yValues);
-
-    ui->customPlot->replot();
-    ui->statusBar->showMessage(QString("Graph Filtered"));
 }
 
 //----------------------------------------------------------------------------------------------------Remove All Graphs
@@ -851,6 +865,7 @@ void MainWindow::clearAllSelected()
     QString dead = serial.readAll();
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
+    resetGraphNames();
 }
 
 //--------------------------------------------------------------------------------------When 10microA Resolution Chosen
