@@ -214,8 +214,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>433</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -354,8 +354,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>433</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -450,8 +450,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>433</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -485,9 +485,9 @@
        <widget class="QLabel" name="label">
         <property name="geometry">
          <rect>
-          <x>150</x>
+          <x>140</x>
           <y>70</y>
-          <width>61</width>
+          <width>91</width>
           <height>21</height>
          </rect>
         </property>
@@ -522,7 +522,7 @@
         <property name="geometry">
          <rect>
           <x>60</x>
-          <y>240</y>
+          <y>250</y>
           <width>107</width>
           <height>28</height>
          </rect>
@@ -576,14 +576,74 @@
          <number>25</number>
         </property>
        </widget>
+       <widget class="QLabel" name="label_14">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>70</y>
+          <width>91</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Quality Factor</string>
+        </property>
+       </widget>
+       <widget class="QDial" name="freqDial_2">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>100</y>
+          <width>91</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>500</number>
+        </property>
+        <property name="value">
+         <number>25</number>
+        </property>
+        <property name="notchTarget">
+         <double>25.000000000000000</double>
+        </property>
+        <property name="notchesVisible">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>190</y>
+          <width>91</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="maximum">
+         <double>50.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.707000000000000</double>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="toolBoxPage4_2">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>433</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -631,8 +691,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>433</height>
+         <width>98</width>
+         <height>28</height>
         </rect>
        </property>
        <attribute name="label">
@@ -642,10 +702,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true">
-      <zorder>toolBox2</zorder>
-      <zorder>toolBox2</zorder>
-     </widget>
+     <widget class="QCustomPlot" name="customPlot" native="true"/>
     </item>
    </layout>
   </widget>
