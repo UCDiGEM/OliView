@@ -67,6 +67,10 @@ private slots:
     void exportSelectedGraph();
     void exportAll();
     void filterSelectedGraph();
+
+    void qualityCorrectSpin(int newValue);
+    void qualityCorrectDial(double newValue);
+
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
     void selectionChanged();
@@ -74,6 +78,8 @@ private slots:
     void sampPAPressed();
     void sampCVPressed();
     void resetAxis();
+    void resetGraphNames();
+
     void clearAllSelected();
     void closeSelected();
     void disconnectSelected();
