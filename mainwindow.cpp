@@ -335,8 +335,9 @@ void MainWindow::exportAll() {
 
     for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
 
-        QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", ui->customPlot->graph(j)->name(), "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
-        QFile data(filename);
+        //QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", ui->customPlot->graph(j)->name(), "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
+        QStringList filename = QStandardPaths::standardLocations(QStandardPaths::DesktopLocation);
+        QFile data(filename[0]+"/"+ui->customPlot->graph(j)->name()+".csv");
         if(data.open(QFile::WriteOnly |QFile::Truncate))
         {
             QTextStream output(&data);
