@@ -1,5 +1,5 @@
 /*
-        Code Developed by the 2014 UC Davis iGEM team (with the help of many examples)
+          Code Developed by the 2014 UC Davis iGEM team (with the help of many examples)
  */
 //---------------------------------------------------------------------------------Function Specific Variables
 // Anodic Stripping
@@ -31,7 +31,6 @@ float samplingDelayFloat;    //(value in µs) >> 1/samplingDelay = Sampling Rate
 
 //---------------------------------------------------------------------------------Pin Assignments
 
-const int refPin = A1;
 const int readPin = A2;  // Main Analog Input
 const int outPin = A14;
 const int sp4tOne = 11;  // Resolution Switch 1
@@ -54,14 +53,17 @@ String fiveStruct;
 String sixStruct;
 
 double value = 0; // ADC reading value
-double ref = 0; //Ref reading value
-float aRef = 2.048; // Analog Reference
-float aRefMid = 1.023;
+//double ref = 0; //Ref reading value
+float aRef = 2.0505; // Analog Reference
+float aRefMid = 1.025530;
 float DACaRef = 3.3;
-float DACaRefMid = aRefMid*4095.0/DACaRef;
-float DCoffset = 0;    //measured analytically
+float DACaRefMid = (aRefMid)*4095.0/DACaRef;
+float DCoffset = 0.0;    //measured analytically
 
 //---------------------------------------------------------------------------------Setup
+
+//#include <ADC.h>
+//ADC *adc = new ADC(); // adc object
 
 void setup() {
 
@@ -69,7 +71,6 @@ void setup() {
 
   pinMode(ledPin, OUTPUT);
   pinMode(readPin, INPUT);
-  pinMode(refPin, INPUT);
   pinMode(outPin, OUTPUT);
   pinMode(sp4tOne, OUTPUT);
   pinMode(sp4tTwo, OUTPUT);
@@ -104,21 +105,11 @@ void loop() {
   }
 
   //---------------------------------------------------------------------------------Anodic Stripping
-  // Example Instruction "anoStrip0.101.002001,"
-  //     Parsed into 
-  //        float  ASstartVolt  
-  //        float  ASpeakVolt
-  //        float  ASscanRate 
-  //        int    ASwaveType
-  //
 
   if (inStruct.startsWith("anoStrip")) {
-    const char * ASSVarray = twoStruct.c_str();
-    ASstartVolt = atof(ASSVarray);
-    const char * ASPVarray = threeStruct.c_str();
-    ASpeakVolt = atof(ASPVarray);
-    const char * ASSRarray = fourStruct.c_str();
-    ASscanRate = atof(ASSRarray);
+    ASstartVolt = twoStruct.toFloat();
+    ASpeakVolt = threeStruct.toFloat();
+    ASscanRate = fourStruct.toFloat();
     ASwaveType = fiveStruct.toInt();
     ASiterations = sixStruct.toInt();
 
@@ -126,32 +117,17 @@ void loop() {
   }
 
   //---------------------------------------------------------------------------------Anodic Stripping
-  // Example Instruction "cycVolt0.101.002001,"
-  //     Parsed into 
-  //        float  CVstartVolt  
-  //        float  CVpeakVolt
-  //        float  CVscanRate
-  //        int    CVwaveType 
-  //
 
   if (inStruct.startsWith("cycVolt")) {
-
-    const char * CVSTarray = twoStruct.c_str();
-    CVstartVolt = atof(CVSTarray);
-    const char * CVPVarray = threeStruct.c_str();
-    CVpeakVolt = atof(CVPVarray);
-    const char * CVSRarray = fourStruct.c_str();
-    CVscanRate = atof(CVSRarray);
+    CVstartVolt = twoStruct.toFloat();
+    CVpeakVolt = threeStruct.toFloat();
+    CVscanRate = fourStruct.toFloat();
     CVwaveType = fiveStruct.toInt();
 
     cycVolt();
   }
 
   //---------------------------------------------------------------------------------Parsing Potentiostatic Amperometry
-  // Example Instruction "potAmpero1.001.00,"
-  //      Sampling Time (1.00 seconds)    PAsampTime  float
-  //      Potential Voltage (1.00 Volts)  PApotVolt   float 
-  //
   if (inStruct.startsWith("potAmpero")) {
     PAsampTime = twoStruct.toFloat();
     PApotVolt = threeStruct.toFloat();
@@ -159,7 +135,7 @@ void loop() {
   }
 
   //---------------------------------------------------------------------------------Parsing Resolution Adjustment
-  // Exmaple Instruction "resolutionA" or "resolutionB"
+  // Exmaple Instruction "resolution1" or "resolution2"
   //      A:  +/- 10 uA
   //      B:  +/- 1000 nA  
   //      C:  +/- 100 nA
@@ -172,21 +148,29 @@ void loop() {
       case (1): 
       {
         gain = 10.0;
+        digitalWrite(sp4tOne, LOW);
+        digitalWrite(sp4tTwo, LOW);
       }
       break;
       case (2): 
       {
         gain = 1000.0;
+        digitalWrite(sp4tOne, HIGH);
+        digitalWrite(sp4tTwo, LOW);
       }
       break;
       case (3): 
       {
         gain = 100.0;
+        digitalWrite(sp4tOne, LOW);
+        digitalWrite(sp4tTwo, HIGH);
       }
       break;
       case (4): 
       {
         gain = 10.0;
+        digitalWrite(sp4tOne, HIGH);
+        digitalWrite(sp4tTwo, HIGH);
       }
       break;
     }
@@ -200,7 +184,9 @@ void loop() {
     samplingDelayFloat = 1000000.0/sampleRateFloat;    //(value in µs) >> 1/samplingDelay = Sampling Rate
     zeroInstructions();
   }
-
+  if (usec > 5000) {
+    usec = 0;
+  }
 }
 
 void zeroInstructions() {
@@ -213,7 +199,7 @@ void zeroInstructions() {
 }
 
 /*
-    Code Developed by the 2014 UC Davis iGEM team (with the help of many examples)
+      Code Developed by the 2014 UC Davis iGEM team (with the help of many examples)
  */
 
 
@@ -279,9 +265,13 @@ void anoStrip() {
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
   int32_t samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
 
-  digitalWrite(refCounterShortSwitch, HIGH);      
+  //digitalWrite(refCounterShortSwitch, HIGH);      
   digitalWrite(workingElectrodeSwitch, HIGH);
   digitalWrite(counterElectrodeSwitch, HIGH);
+
+  elapsedMicros timer = 0;
+
+  DACaRefMid = aRefMid*4095.0/DACaRef;
 
   Serial.println(samples);                                            //samples
   double voltDiv = scanRate/(1000.0*sampleRateFloat);
@@ -289,32 +279,33 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
   Serial.println(voltDiv,6);   //voltDiv
   Serial.println(flipSample);
 
+  while (timer < 20); // wait
+  timer = timer - 20;
 
-  while (usec < 20); // wait
-  usec = usec - 20;
-
-
-  //elapsedMicros usec = 0;
   switch (waveType) {
     //---------------------------------------------------------------------------------Constant Potential
     float val, val2, val3;
 
     case (0):
     {
+
       digitalWrite(ledPin, HIGH);
       val = DACaRefMid + (endVolt) * 4095.0 / DACaRef;
       analogWrite(A14, (int)val);
 
-      while (usec < samplingDelay/2); // wait
-      usec = usec - samplingDelay/2;
+      while (timer < samplingDelay/2); // wait
+      timer = timer - samplingDelay/2;
 
       for (int32_t i = 0; i < samples; i++) {
+
         value = analogRead(readPin);                  // analog read == # out of 2^16
-        ref = analogRead(refPin);
-        Serial.println((((value-ref) * aRef / 65535.0 + DCoffset)/aRefMid)*gain, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
-        while (usec < samplingDelay); // wait
-        usec = usec - samplingDelay;
+
+
+        Serial.println((((value) * aRef / 65535.0 - aRefMid + DCoffset)/aRefMid)*gain, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
+        while (timer < samplingDelay); // wait
+        timer = timer - samplingDelay;
       }
+
       digitalWrite(ledPin, LOW);
     }
 
@@ -322,6 +313,7 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
     //---------------------------------------------------------------------------------Sine Wave
     case (1):
     {
+
       digitalWrite(ledPin, HIGH);
       for (int32_t i = 0; i < samples; i++) {
 
@@ -329,15 +321,15 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
         analogWrite(A14, (int)val2);
         phase = phase + 100/sampleRateFloat;
 
-        while (usec < samplingDelay/2); // wait
-        usec = usec - samplingDelay/2;
+        while (timer < samplingDelay/2); // wait
+        timer = timer - samplingDelay/2;
 
         value = analogRead(readPin);                  // analog read == # out of 2^16
         //Serial.println(value * aRef / 65535.0, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
         Serial.println(((value * aRef / 65535.0-aRef/2+ DCoffset)/aRefMid)*gain, 6);    // 
         if (phase >= twopi) phase = 0;
-        while (usec < samplingDelay/2); // wait
-        usec = usec - samplingDelay/2;
+        while (timer < samplingDelay/2); // wait
+        timer = timer - samplingDelay/2;
       }
       phase = 0.0;
       digitalWrite(ledPin, LOW);
@@ -352,58 +344,69 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
     case (2): // triangle wave
     {
       int j = 0;
-      double voltMark = startVolt;
+
       while (j < iterations) {
         digitalWrite(ledPin, HIGH);
-        j++;      
+        j++;
+        double voltMark = startVolt;      
         val3 = DACaRefMid + (startVolt)/DACaRef*4095.0;
         for (int32_t i = 0;  i < flipSample; i++) {
 
           analogWrite(A14, (int)val3);
           val3 += 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
 
-          while (usec < samplingDelay/2); // wait
-          usec = usec - samplingDelay/2;
+          while (timer < samplingDelay/2); // wait
+          timer = timer - samplingDelay/2;
 
           value = analogRead(readPin);                  // analog read == # out of 2^16
           Serial.println(((value * aRef / 65535.0-aRef/2+ DCoffset)/aRefMid)*gain, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
           Serial.println(voltMark, 6);
           voltMark += scanRate/(1000.0*sampleRateFloat);
-          
-          while (usec < samplingDelay/2); // wait
-          usec = usec - samplingDelay/2;
+
+          while (timer < samplingDelay/2); // wait
+          timer = timer - samplingDelay/2;
 
 
         }
-        digitalWrite(ledPin, LOW);
+
         for (int32_t i = 0;  i < flipSample; i++) {
 
           analogWrite(A14, (int)val3);
           val3 -= 4095.0*scanRate/(1000.0*sampleRateFloat*DACaRef);
 
-          while (usec < samplingDelay/2); // wait
-          usec = usec - samplingDelay/2;
+          while (timer < samplingDelay/2); // wait
+          timer = timer - samplingDelay/2;
 
           value = analogRead(readPin);                  // analog read == # out of 2^16
           Serial.println(((value * aRef / 65535.0-aRef/2+ DCoffset)/aRefMid)*gain, 6);    // ratio, value/2^16, is the percent of ADC reference... * aRef (ADC Reference Voltage) == Voltage measured
           Serial.println(voltMark, 6);
           voltMark -= scanRate/(1000.0*sampleRateFloat);
-          
-          while (usec < samplingDelay/2); // wait
-          usec = usec - samplingDelay/2;
+
+          while (timer < samplingDelay/2); // wait
+          timer = timer - samplingDelay/2;
         }
 
       }
+      digitalWrite(ledPin, LOW);
+    }
 
+    break;
+    //--------------------------------------------------------------------------------------------------Continuous Sampling
+    case (3): 
+    {
     }
     break;
 
   }
   analogWrite(A14, DACaRefMid);
-  digitalWrite(refCounterShortSwitch, LOW);      
+  //digitalWrite(refCounterShortSwitch, LOW);      
   digitalWrite(workingElectrodeSwitch, LOW);
   digitalWrite(counterElectrodeSwitch, LOW);
 }
+
+
+
+
 
 
 
