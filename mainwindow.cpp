@@ -1,28 +1,3 @@
-/***************************************************************************
-**                                                                        **
-**  QCustomPlot, an easy to use, modern plotting widget for Qt            **
-**  Copyright (C) 2011, 2012, 2013, 2014 Emanuel Eichhammer               **
-**                                                                        **
-**  This program is free software: you can redistribute it and/or modify  **
-**  it under the terms of the GNU General Public License as published by  **
-**  the Free Software Foundation, either version 3 of the License, or     **
-**  (at your option) any later version.                                   **
-**                                                                        **
-**  This program is distributed in the hope that it will be useful,       **
-**  but WITHOUT ANY WARRANTY; without even the implied warranty of        **
-**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         **
-**  GNU General Public License for more details.                          **
-**                                                                        **
-**  You should have received a copy of the GNU General Public License     **
-**  along with this program.  If not, see http://www.gnu.org/licenses/.   **
-**                                                                        **
-****************************************************************************
-**           Author: Emanuel Eichhammer                                   **
-**  Website/Contact: http://www.qcustomplot.com/                          **
-**             Date: 07.04.14                                             **
-**          Version: 1.2.1                                                **
-****************************************************************************/
-
 /************************************************************************************************************
 **                                                                                                         **
 **  This was developed from example code for QCustomPlot.                                                  **
@@ -34,6 +9,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QDesktopServices>
 #include <QFile>
 #include <QMenuBar>
 #include <QDebug>
@@ -43,6 +19,7 @@
 #include <QMetaEnum>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QtAlgorithms>
 
 QSerialPort serial;
 
@@ -60,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
 
     ui->customPlot->xAxis->setRange(0, 1000);
-    ui->customPlot->yAxis->setRange(-10, 10);
+    ui->customPlot->yAxis->setRange(-100, 100);
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
 
@@ -78,11 +55,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetAxis()));
     connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(resetGraphNames()));
+    connect(ui->toolBox2, SIGNAL(currentChanged(int)), this, SLOT(statsCheck(int)));
     connect(ui->freqDial, SIGNAL(sliderMoved(int)), ui->freqSpinBox, SLOT(setValue(int)));
     connect(ui->freqSpinBox, SIGNAL(valueChanged(int)), ui->freqDial, SLOT(setValue(int)));
 
     connect(ui->qualDial, SIGNAL(sliderMoved(int)), this, SLOT(qualityCorrectSpin(int)));
     connect(ui->qualSpinBox, SIGNAL(valueChanged(double)), this, SLOT(qualityCorrectDial(double)));
+
+    connect(ui->loadEnzymeData, SIGNAL(clicked()), this, SLOT(loadEnzymeData()));
+
+    connect(ui->startSlider, SIGNAL(sliderReleased()), this, SLOT(statsUpdate()));
+    //connect(ui->graphNames_2, SIGNAL(currentIndexChanged(int)), this, SLOT(statsUpdate()));
+    connect(ui->startSlider, SIGNAL(sliderMoved(int)), this, SLOT(brushUpdate(int)));
 
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
     connect(ui->action_10_nA, SIGNAL(triggered()), this, SLOT(res10nASelected()));
@@ -98,10 +82,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->action2000_Hz, SIGNAL(triggered()), this, SLOT(rate2000Selected()));
     connect(ui->action5000_Hz, SIGNAL(triggered()), this, SLOT(rate5000Selected()));
-    connect(ui->action10000_Hz, SIGNAL(triggered()), this, SLOT(rate10000Selected()));
+
+    connect(ui->actionAbout_Us, SIGNAL(triggered()), this, SLOT(aboutUs()));
 
     sampleRate = 2000;
     waveNum = 0;
+    selectionBracketMade = false;
 
     fillPortsInfo();
     resetAxis();
@@ -126,21 +112,49 @@ void MainWindow::setupWaveTypes()
     ui->ASwaveType->setIconSize(QSize(100,28));
     ui->ASwaveType->setCurrentIndex(0);
 
-    ui->filterType->insertItem(0,"Low Pass");
-    ui->filterType->insertItem(1,"Notch");
 
+}
+
+/*void MainWindow::addEnzyme() {
+    enzymeCount++;
+    ui->enzymeList->setRowCount(1+enzymeCount);
+}
+
+void MainWindow::addSubstrate() {
+
+}*/
+
+void MainWindow::loadEnzymeData() {
+    QString filename = QFileDialog::getOpenFileName(this, "DialogTitle", "EnzymeData.csv", "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0);
+    QFile data(filename);
+
+    if(data.open(QFile::WriteOnly |QFile::Truncate))
+    {
+        QTextStream input(&data);
+        /*qDebug() << input;
+        int cnt1 = 0;  int cnt2 = 0;
+        while (i != input->constEnd()) {
+            cnt1++;  cnt2++;
+            ui->enzymeList->setItem(1,1, new QTableWidgetItem(text));
+        }*/
+    }
+
+
+}
+
+void MainWindow::aboutUs() {
 
 }
 
 void MainWindow::qualityCorrectDial(double newValue) {
     int newValueInt = qRound(1000.0*log((1.0+newValue)));
-    qDebug() << newValueInt;
+    //qDebug() << newValueInt;
     ui->qualDial->setValue(newValueInt);
 }
 
 void MainWindow::qualityCorrectSpin(int newValue) {
     double newValueDouble = qExp(newValue/1000.0)-1.0;
-    qDebug() << newValueDouble;
+    //qDebug() << newValueDouble;
     ui->qualSpinBox->setValue(newValueDouble);
 
 }
@@ -177,7 +191,6 @@ void MainWindow::fillPortsInfo()
             }
         }
     }
-
 
     teensyPort = QInputDialog::getItem(this, "Select your COM port", "Available Ports:", list);
     setUpComPort();
@@ -252,6 +265,21 @@ void MainWindow::setupAldeSensGraph(QCustomPlot *customPlot)
     connect(ui->customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
 
     ui->customPlot->replot();
+
+    ui->filterType->insertItem(0,"Low Pass");
+    ui->filterType->insertItem(1,"Notch");
+
+    ui->enzymeList->setSortingEnabled(true);
+    ui->enzymeList->setRowCount(1);
+    ui->enzymeList->setColumnCount(3);
+
+    QStringList headers;
+    headers << "Substrate" << "Km (µM)" << "Vmax (nmol/min/mg)";
+    ui->enzymeList->setHorizontalHeaderLabels(headers);
+
+
+
+
 }
 
 /*************************************************************************************************************/
@@ -300,11 +328,22 @@ void MainWindow::mouseWheel()
 
 void MainWindow::removeSelectedGraph()
 {
+
+
     if (ui->customPlot->selectedGraphs().size() > 0)
     {
+        if (statsTracer->size() > 2 && (ui->customPlot->selectedGraphs().first() == ui->customPlot->graph(ui->graphNames_2->currentIndex()))) {
+            ui->customPlot->removeItem(statsTracer);
+            ui->customPlot->removeItem(selectionBracket);
+        }
+
         ui->customPlot->removeGraph(ui->customPlot->selectedGraphs().first());
         ui->customPlot->replot();
         resetGraphNames();
+
+        if (statsTracer->size() < 2) {
+            statsCheck(4);
+        }
     }
 }
 
@@ -368,18 +407,14 @@ void MainWindow::filterSelectedGraph() {
             filter = new Biquad(bq_type_notch, frequency / sampleRate, 0.707, 0);
         }
 
-        //Biquad *filter1 = new Biquad(bq_type_lowpass, frequency / sampleRate, 0.707, 0);
-
-        //int sampleNumber = ui->customPlot->graph(ui->graphNames->currentIndex())->keyAxis()->range().size();
-
-        int sampleNumber = 2000;
-        qDebug() << ui->graphNames->currentIndex();
-
-        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
         int counter = 0;
 
         const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames->currentIndex())->data();
         QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+
+        int sampleNumber = dataMap->count();
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+
         while (i != dataMap->constEnd()) {
             xValues[counter] = i.value().key;
             yValues[counter] = filter->process(i.value().value);
@@ -555,7 +590,7 @@ void MainWindow::sampPAPressed()
 
     qDebug() << mainInstructions;
 
-    QTimer::singleShot(150, this, SLOT(preParse()));
+    QTimer::singleShot(250, this, SLOT(preParse()));
 
 }
 
@@ -610,25 +645,6 @@ void MainWindow::preParse() {
     }
 }
 
-void MainWindow::pointPlot() {
-
-    /*everythingAvail.append(serial.readAll());
-
-    ui->customPlot->graph()->addData(timeValue, analogRead.toDouble());
-    timeValue += 1000/double(sampleRate);
-    graphMemory++;
-    ui->customPlot->replot();
-    qDebug() << analogRead;
-    qDebug() << timeValue;
-
-
-    if (graphMemory >= samples) {
-
-        qDebug() << samples;
-        ui->statusBar->showMessage(QString("Sampling Done!"));
-        ui->customPlot->replot();
-    }*/
-}
 
 void MainWindow::readEverything() {
 
@@ -640,10 +656,10 @@ void MainWindow::readEverything() {
 
     for(int i = 0; i < everythingAvail.length(); i++) {
 
-        if (everythingAvail.at(everythingAvail.length()-1).size() < 9){
-            readEverything_container = everythingAvail.at(i);
+        //if (everythingAvail.at(0).size() < 9){
+        //  everythingAvail.at(0).append(readEverything_container = );
 
-        }
+        //}
 
         /*if (everythingAvail.at(i).size() < 9){
             readEverything_container = everythingAvail.at(i);
@@ -662,14 +678,15 @@ void MainWindow::readEverything() {
          }
 
         else {*/
-        //qDebug() << everythingAvail.at(i).size();
+        qDebug() << everythingAvail.at(i);
+        qDebug() << everythingAvail.at(i).size();
 
         graphMemory++;
         ui->customPlot->graph()->addData(timeValue, everythingAvail.at(i).toDouble());
 
         timeValue += 1000/double(sampleRate);
 
-        qDebug() << graphMemory;
+        //qDebug() << graphMemory;
 
         if (graphMemory >= (int)samples) {
             QObject::disconnect(&serial, SIGNAL(readyRead()), this, SLOT(readEverything()));
@@ -689,20 +706,76 @@ void MainWindow::readEverything() {
 }
 
 
+
+/*void MainWindow::readEverything() {
+
+    // Read everything is called by readyRead to read all incoming data
+    everythingAvail = (QString(serial.readAll()).split("\n"));
+
+    //qDebug() << everythingAvail.at(everythingAvail.begin());
+
+
+
+    for(int i = 0; i < everythingAvail.length(); i++) {
+
+        if (everythingAvail.at(everythingAvail.length()-1).size() < 9){
+            readEverything_containerStart = everythingAvail.at(everythingAvail.length()-1);
+
+        }
+
+        if (everythingAvail.at(0).size() < 9){
+            readEverything_container = readEverything_containerStart.append(everythingAvail.at(0));
+            timeValue += 1000/double(sampleRate);
+            ui->customPlot->graph()->addData(timeValue, readEverything_container.toDouble());
+            graphMemory++;
+
+            //qDebug() << everythingAvail.at(i);
+        }
+
+        else {
+            //qDebug() << everythingAvail.at(i).size();
+
+            graphMemory++;
+            ui->customPlot->graph()->addData(timeValue, everythingAvail.at(i).toDouble());
+
+            timeValue += 1000/double(sampleRate);
+
+            //qDebug() << graphMemory;
+
+            if (graphMemory >= (int)samples) {
+                QObject::disconnect(&serial, SIGNAL(readyRead()), this, SLOT(readEverything()));
+                everythingAvail = QStringList();
+
+                ui->statusBar->showMessage(QString("Sampling Done!"));
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                //}
+
+                // Conditioning for samples that get cut-off
+
+
+            }
+        }
+        //readEverything_count++;
+        ui->customPlot->replot();
+    }
+}*/
+
+
 /*************************************************************************************************************/
 /***************************** READ DATA FROM SERIAL PORT AND GRAPH THE VALUES *******************************/
 /*************************************************************************************************************/
 void MainWindow::parseAndPlot() {
 
     Biquad *filter = new Biquad(bq_type_lowpass, (sampleRate/100.0) / sampleRate, 50.0, 0);
+
     qDebug() << (sampleRate/100.0) / sampleRate;
 
-    Biquad *filter1 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
-    Biquad *filter2 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
-    Biquad *filter3 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
-    Biquad *filter4 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
-    Biquad *filter5 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
-    Biquad *filter6 = new Biquad(bq_type_notch, (sampleRate/100.0) / sampleRate, 0.707, 0);
+    Biquad *filter1 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
+    Biquad *filter2 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
+    Biquad *filter3 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
+    Biquad *filter4 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
+    Biquad *filter5 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
+    Biquad *filter6 = new Biquad(bq_type_notch, 60.0 / sampleRate, 0.707, 0);
 
     QString inByteArray;
     QPen pen;
@@ -722,7 +795,8 @@ void MainWindow::parseAndPlot() {
         y = inByteArray.toDouble();
         xValues[i] = x;
 
-        yValues[i] = filter1->process(filter2->process(filter3->process(filter4->process(filter5->process(filter6->process(filter->process(y)))))));
+        //yValues[i] = filter1->process(filter2->process(filter3->process(filter4->process(filter5->process(filter6->process(filter->process(y)))))));
+        yValues[i] = y;
         //LowPass Filter
 
         x += 1000/double(sampleRate);
@@ -761,6 +835,7 @@ void MainWindow::CVparseAndPlot()
     }
 
 
+    ui->customPlot->replot();
     QVector<double> xValuesUp(samples), yValuesUp(samples);
 
     for (quint32 i = 0; i<samples; i++) {
@@ -781,20 +856,13 @@ void MainWindow::CVparseAndPlot()
     ui->customPlot->graph()->setData(xValuesUp, yValuesUp);
 
     QCPScatterStyle scatterVolt;
-    scatterVolt.setSize(2.0);
+
 
     scatterVolt.setPen(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
+    scatterVolt.setShape(QCPScatterStyle::ssCircle);
+    scatterVolt.setSize(0.5);
     ui->customPlot->graph()->setScatterStyle(scatterVolt);
     ui->customPlot->replot();
-
-    ui->customPlot->graph()->setLineStyle(QCPGraph::lsNone);
-    ui->customPlot->graph()->setScatterStyle(QCPScatterStyle::ssDisc);
-
-
-    ui->customPlot->graph()->rescaleValueAxis(true);
-
-    ui->customPlot->replot();
-
     ui->statusBar->showMessage(QString("Sample #%1 done!").arg(count+1));
 
     count += 1;
@@ -813,6 +881,139 @@ void MainWindow::CVparseAndPlot()
 
     }
 }
+
+/*************************************************************************************************************/
+/*************************************** STATISTICS PACKAGE **************************************************/
+/*************************************************************************************************************/
+
+
+void MainWindow::statsCheck(int toolBoxIndex) {
+    if(toolBoxIndex !=4 && ui->customPlot->graphCount() > 0) {
+        selectionBracket->setVisible(false);
+        ui->customPlot->replot();
+    }
+
+    if(ui->customPlot->graphCount() > 0 && !selectionBracketMade) {
+
+        const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames_2->currentIndex())->data();
+        int sampleNumber = dataMap->count();
+        int counter = 0;
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+
+        QMap<double, QCPData>::const_iterator j = dataMap->constBegin();
+        while (j != dataMap->constEnd()) {
+            xValues[counter] = j.value().key;
+            yValues[counter] = j.value().value;
+            counter++;
+            ++j;
+        }
+
+        qSort(yValues.begin(), yValues.end());
+        float max = yValues[sampleNumber-1];
+
+        QCPItemBracket *bracket = new QCPItemBracket(ui->customPlot);
+        selectionBracket = bracket;
+        ui->customPlot->addItem(selectionBracket);
+        selectionBracketMade = true;
+        selectionBracket->left->setCoords(0, max+5);
+        selectionBracket->right->setCoords(dataMap->count()/(sampleRate/1000), max+5);
+        selectionBracket->setLength(8);
+
+    }
+    else if (ui->customPlot->graphCount() > 0 && toolBoxIndex == 4) {
+        selectionBracket->setVisible(true);
+        ui->customPlot->replot();
+    }
+}
+
+void MainWindow::statsUpdate()
+{
+    if(ui->customPlot->graphCount() > 0) {
+        float meanAddition = 0;
+
+        const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames_2->currentIndex())->data();
+        QMap<double, QCPData>::const_iterator i = dataMap->constBegin();
+        ui->startSlider->setMaximum(dataMap->count()/(sampleRate/1000)-1);
+
+        int counter = 0;
+        while (i != dataMap->constEnd()) {
+            ++i;
+            if (i.value().key >= ui->startSlider->value()){
+                meanAddition += i.value().value;
+                counter++;
+            }
+        }
+
+        float mean = meanAddition/counter;
+        float varianceAddition = 0;
+
+        int sampleNumber = dataMap->count()-ui->startSlider->value()*(sampleRate/1000);
+        qDebug() << sampleNumber;
+        counter = 0;
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+
+        QMap<double, QCPData>::const_iterator j = dataMap->constBegin();
+        while (j != dataMap->constEnd()) {
+            if (j.value().key >= ui->startSlider->value()){
+                xValues[counter] = j.value().key;
+                yValues[counter] = j.value().value;
+                counter++;
+            }
+
+            if (j.value().key >= ui->startSlider->value()){
+                varianceAddition += qPow((j.value().value-mean),2);
+            }
+            ++j;
+        }
+
+        qSort(yValues.begin(), yValues.end());
+        float min = yValues[0];
+        qDebug() << yValues[0];
+        float max = yValues[sampleNumber-1];
+
+        float variance = varianceAddition/counter;
+        float sDeviation = qSqrt(variance);
+
+        ui->minLabel->setText(QString("%1").arg(min));
+        ui->maxLabel->setText(QString("%1").arg(max));
+        ui->meanLabel->setText(QString("%1").arg(mean));
+        ui->sDeviationLabel->setText(QString("+/-  %1").arg(sDeviation));
+
+        brushUpdate(ui->startSlider->value());
+        //ui->statusBar->showMessage(QString("%1").arg(mean));
+
+
+    }
+}
+
+
+void MainWindow::brushUpdate(int startPosition) {
+    if(ui->customPlot->graphCount() > 0 && ui->toolBox2->currentIndex()==4) {
+
+        const QCPDataMap *dataMap = ui->customPlot->graph(ui->graphNames_2->currentIndex())->data();
+        int sampleNumber = dataMap->count();
+        int counter = 0;
+        QVector<double> xValues(sampleNumber), yValues(sampleNumber);
+
+        QMap<double, QCPData>::const_iterator j = dataMap->constBegin();
+        while (j != dataMap->constEnd()) {
+            xValues[counter] = j.value().key;
+            yValues[counter] = j.value().value;
+            counter++;
+            ++j;
+        }
+
+        qSort(yValues.begin(), yValues.end());
+        float max = yValues[sampleNumber-1];
+        selectionBracket->left->setCoords(startPosition, max+5);
+
+        ui->customPlot->replot();
+    }
+}
+
+
+
+
 
 /*************************************************************************************************************/
 /***************************************** CREATE MENU FUNCTIONS *********************************************/
@@ -880,18 +1081,18 @@ void MainWindow::resetAxis()
 
 void MainWindow::resetGraphNames()
 {
+    //This function will replace the two graph name selectors in the Filtering & Statistics tabs with updated graph names.
 
-    for (int j = 0; j < ui->customPlot->graphCount(); ++j) {
+    ui->graphNames->clear();
+    ui->graphNames_2->clear();
+
+    for (int j = 0; j < ui->customPlot->graphCount(); j++) {
         ui->graphNames->insertItem(j, ui->customPlot->graph(j)->name());
+        ui->graphNames_2->insertItem(j, ui->customPlot->graph(j)->name());
     }
 
-    qDebug() << ui->customPlot->graphCount();
-    if (ui->customPlot->graphCount() == 1){
-        ui->graphNames->setMaxCount(ui->customPlot->graphCount());
-    }
-    else{
-        ui->graphNames->setMaxCount(ui->customPlot->graphCount()+1);
-    }
+
+
     ui->customPlot->replot();
 
     //serial.close();
@@ -906,6 +1107,13 @@ void MainWindow::clearAllSelected()
     ui->customPlot->clearGraphs();
     ui->customPlot->replot();
     resetGraphNames();
+
+    if (statsTracer->size() > 2) {
+        ui->customPlot->removeItem(statsTracer);
+        ui->customPlot->removeItem(selectionBracket);
+
+    }
+
 }
 
 //--------------------------------------------------------------------------------------When 10microA Resolution Chosen
@@ -917,7 +1125,7 @@ void MainWindow::res10ASelected()
     clearAllSelected();
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
-    ui->customPlot->yAxis->setRange(-10,10);
+    ui->customPlot->yAxis->setRange(-100,100);
     ui->customPlot->replot();
 
 
@@ -930,8 +1138,8 @@ void MainWindow::res1000nASelected()
     serial.write("resolution!2@#$%^");
     clearAllSelected();
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
-    ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
-    ui->customPlot->yAxis->setRange(-1000,1000);
+    ui->customPlot->yAxis->setLabel("Microamps (µA)");
+    ui->customPlot->yAxis->setRange(-10,10);
     ui->customPlot->replot();
 }
 
@@ -942,7 +1150,7 @@ void MainWindow::res100nASelected()
     serial.write("resolution!3@#$%^");
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
-    ui->customPlot->yAxis->setRange(-100,100);
+    ui->customPlot->yAxis->setRange(-1000,1000);
     ui->customPlot->replot();
 }
 
@@ -953,7 +1161,7 @@ void MainWindow::res10nASelected()
     serial.write("resolution!4@#$%^");
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
-    ui->customPlot->yAxis->setRange(-10,10);
+    ui->customPlot->yAxis->setRange(-100,100);
     ui->customPlot->replot();
 }
 
