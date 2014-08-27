@@ -53,12 +53,13 @@ String fiveStruct;
 String sixStruct;
 
 double value = 0; // ADC reading value
-//double ref = 0; //Ref reading value
+double ref = 0; //Ref reading value
 float aRef = 2.0505; // Analog Reference
 float aRefMid = 1.025530;
 float DACaRef = 3.3;
-float DACaRefMid = (aRefMid)*4095.0/DACaRef;
-float DCoffset = 0.0;    //measured analytically
+float DACaRefMid = (aRefMid+0.012)*4095.0/DACaRef;
+float DACoff = aRef * 4095.0 / DACaRef;
+float DCoffset = 0.0034;    //measured analytically
 
 //---------------------------------------------------------------------------------Setup
 
@@ -89,8 +90,9 @@ void setup() {
 //---------------------------------------------------------------------------------Main Loop
 
 void loop() {
-
-  analogWrite(A14, DACaRefMid);                            //Maintain virtual zero at electrode.
+  
+  analogWrite(A14, DACoff);                            //Maintain almost (small voltage due to op-Amp offset) zero at electrode.
+  digitalWrite(refCounterShortSwitch, HIGH);
 
   if (Serial.available()) {
     // Interprets commands from computer
@@ -265,7 +267,7 @@ void anoStrip() {
 void sample(float sampTime, int waveType, float startVolt, float endVolt, float scanRate, int iterations) {
   int32_t samples = round(sampTime * sampleRateFloat); // With delay of 0.5 ms, 2000 samples per second
 
-  //digitalWrite(refCounterShortSwitch, HIGH);      
+  digitalWrite(refCounterShortSwitch, LOW);      
   digitalWrite(workingElectrodeSwitch, HIGH);
   digitalWrite(counterElectrodeSwitch, HIGH);
 
@@ -398,8 +400,8 @@ void sample(float sampTime, int waveType, float startVolt, float endVolt, float 
     break;
 
   }
-  analogWrite(A14, DACaRefMid);
-  //digitalWrite(refCounterShortSwitch, LOW);      
+  analogWrite(A14, DACoff);
+  digitalWrite(refCounterShortSwitch, HIGH);      
   digitalWrite(workingElectrodeSwitch, LOW);
   digitalWrite(counterElectrodeSwitch, LOW);
 }
