@@ -1028,7 +1028,9 @@ void MainWindow::statsCheck() {
                     qSort(steadyStateY.begin(), steadyStateY.end());
                     float localMin = yValues[0];
 
-
+                    if(steadyStateBracketMade) {
+                        return;
+                    }
                     //This is the steady state assumption controller
                     //if the linear regression estimate of the slope is smaller than the user defined limit,
                     //and there is 5 seconds of sample data following, steady state has been reached
@@ -1044,6 +1046,16 @@ void MainWindow::statsCheck() {
                         ui->customPlot->addItem(steadyStateBracket);
                         steadyStateBracket->left->setCoords(k.value().key+steadyStateLength, localMin);
                         steadyStateBracket->right->setCoords(k.value().key, localMin);
+
+                        float steadyStateSum;
+                        for (int i = 0; i < steadyStateLength*sampleRate/1000; i++){
+                            steadyStateSum += k.value().value;
+                            ++k;
+                        }
+
+                        float stdyStateMean = steadyStateSum/steadyStateLength*sampleRate/1000;
+                        ui->steadyStateMeanLabel->setText(QString("%1").arg(stdyStateMean));
+
                         ui->customPlot->replot();
                         ui->statusBar->showMessage(QString("Steady State Reached!"));
                         steadyStateBracketMade = true;

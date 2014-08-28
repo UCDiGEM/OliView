@@ -901,6 +901,64 @@
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
+       <widget class="QLabel" name="label_22">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>260</y>
+          <width>111</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="text">
+         <string>Steady State</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_23">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>290</y>
+          <width>81</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="text">
+         <string>Mean</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="steadyStateMeanLabel">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>290</y>
+          <width>81</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="toolBoxPage4_2">
        <property name="geometry">
@@ -1132,11 +1190,6 @@
          </widget>
         </widget>
        </widget>
-       <zorder>scrollArea</zorder>
-       <zorder>loadEnzymeData</zorder>
-       <zorder>saveEnzymeData</zorder>
-       <zorder>enzymeListC</zorder>
-       <zorder>tabWidget</zorder>
       </widget>
       <widget class="QWidget" name="page">
        <property name="geometry">
