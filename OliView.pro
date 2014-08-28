@@ -1,5 +1,5 @@
 #
-#  QCustomPlot Plot Examples
+#  OliView
 #
 
 QT       += core gui
@@ -21,8 +21,7 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \
-    favicon.ico
+RC_ICONS = Icon.ico
     
 RESOURCES += \
     OliView.qrc
