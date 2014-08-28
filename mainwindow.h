@@ -1,27 +1,3 @@
-/***************************************************************************
-**                                                                        **
-**  QCustomPlot, an easy to use, modern plotting widget for Qt            **
-**  Copyright (C) 2011, 2012, 2013, 2014 Emanuel Eichhammer               **
-**                                                                        **
-**  This program is free software: you can redistribute it and/or modify  **
-**  it under the terms of the GNU General Public License as published by  **
-**  the Free Software Foundation, either version 3 of the License, or     **
-**  (at your option) any later version.                                   **
-**                                                                        **
-**  This program is distributed in the hope that it will be useful,       **
-**  but WITHOUT ANY WARRANTY; without even the implied warranty of        **
-**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         **
-**  GNU General Public License for more details.                          **
-**                                                                        **
-**  You should have received a copy of the GNU General Public License     **
-**  along with this program.  If not, see http://www.gnu.org/licenses/.   **
-**                                                                        **
-****************************************************************************
-**           Author: Emanuel Eichhammer                                   **
-**  Website/Contact: http://www.qcustomplot.com/                          **
-**             Date: 07.04.14                                             **
-**          Version: 1.2.1                                                **
-****************************************************************************/
 
 
 #ifndef MAINWINDOW_H
@@ -29,7 +5,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
-#include "qcustomplot.h" // the header file of QCustomPlot
+#include "qcustomplot.h"
 #include "Biquad.h"
 
 namespace Ui {
@@ -56,23 +32,27 @@ private slots:
     void waveType();
     void fillPortsInfo();
     void preParse();
-    void pointPlot();
     void readEverything();
 
     void parseAndPlot();
+    void showRawData();
     void CVparseAndPlot();
     void mouseWheel();
     void mousePress();
     void removeSelectedGraph();
     void exportSelectedGraph();
     void exportAll();
+    void changeExportDestination();
     void filterSelectedGraph();
 
+    void loadEnzymeData();
+    void aboutUs();
     void qualityCorrectSpin(int newValue);
     void qualityCorrectDial(double newValue);
 
     void removeAllGraphs();
     void contextMenuRequest(QPoint pos);
+    void setGraphVisible();
     void selectionChanged();
     void sampASPressed();
     void sampPAPressed();
@@ -94,9 +74,14 @@ private slots:
     void rate5000Selected();
     void rate10000Selected();
 
+    void statsCheck();
+    void statsUpdate();
+    void brushUpdate(int startPosition);
+
 private:
     Ui::MainWindow *ui;
     QString teensyPort;
+    QString exportDestination;
     QStringList everythingAvail;
     quint32 samples;
 
@@ -108,12 +93,24 @@ private:
     QElapsedTimer elapsedTimer;
     quint32 flipSample;
 
+    //Used in realtime data plotting
     int readEverything_count;
     QString readEverything_containerStart;
     QString readEverything_container;
 
     int waveNum;
     int count;
+    int enzymeCount;
+
+    //Used in statistics package animations
+    QCPItemBracket *selectionBracket;
+    QCPItemBracket *steadyStateBracket;
+    float steadyStateValue;
+    float steadyStateLength;
+    QPen steadyStateBracketPen;
+    bool selectionBracketMade;
+    bool steadyStateBracketMade;
+    QPen selectionBracketPen;
 
 
 };
