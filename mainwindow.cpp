@@ -66,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadEnzymeData, SIGNAL(clicked()), this, SLOT(loadEnzymeData()));
 
     connect(ui->startSlider, SIGNAL(sliderReleased()), this, SLOT(statsUpdate()));
-    //connect(ui->graphNames_2, SIGNAL(currentIndexChanged(int)), this, SLOT(statsUpdate()));
+    connect(ui->graphNames_2, SIGNAL(activated(int)), this, SLOT(statsUpdate()));
     connect(ui->startSlider, SIGNAL(sliderMoved(int)), this, SLOT(brushUpdate(int)));
 
     connect(ui->action_10_A, SIGNAL(triggered()), this, SLOT(res10ASelected()));
@@ -90,9 +90,10 @@ MainWindow::MainWindow(QWidget *parent) :
     sampleRate = 2000;
     waveNum = 0;
     selectionBracketMade = false;
-    steadyStateBracketMade = false;
-    steadyStateValue = 0.0002;
-    steadyStateLength = 5000;
+    steadyStateValue = 0.001;
+    steadyStateLength = 3000;
+
+    //exportDestination
 
     fillPortsInfo();
     resetAxis();
@@ -286,13 +287,13 @@ void MainWindow::setupAldeSensGraph(QCustomPlot *customPlot)
     QStringList headers;
     headers << "Substrate" << "Km" << "Kcat";
     ui->enzymeList->setHorizontalHeaderLabels(headers);
-    ui->enzymeList->setToolTip("Km (uM), Kcat (nmol/min/mg)");
+    ui->enzymeList->setToolTip("Km (µM), Kcat (1/s)");
 
     ui->enzymeListB->setHorizontalHeaderLabels(headers);
-    ui->enzymeListB->setToolTip("Km (uM), Kcat (nmol/min/mg)");
+    ui->enzymeListB->setToolTip("Km (µM), Kcat (1/s)");
 
     ui->enzymeListC->setHorizontalHeaderLabels(headers);
-    ui->enzymeListC->setToolTip("Km (uM), Vmax (nmol/min/mg)");
+    ui->enzymeListC->setToolTip("Km (µM), Kcat (1/s)");
 
     QString style = "::section{"
             "padding-right: 3px;"
@@ -313,6 +314,16 @@ void MainWindow::setupAldeSensGraph(QCustomPlot *customPlot)
     ui->enzymeListC->setColumnWidth(0,75);
     ui->enzymeListC->setColumnWidth(1,65);
     ui->enzymeListC->setColumnWidth(2,65);
+
+    // add the text label at the top:
+    resolutionText = new QCPItemText(ui->customPlot);
+
+    ui->customPlot->addItem(resolutionText);
+    //resolutionText->position->setParentAnchor(ui->customPlot);
+    resolutionText->position->setCoords(0, 105); // move 10 pixels to the top from bracket center anchor
+    resolutionText->setPositionAlignment(Qt::AlignBottom|Qt::AlignLeft);
+    resolutionText->setText("Range: +/- 100 µA");
+    resolutionText->setFont(QFont(font().family(), 8));
 
 }
 
@@ -391,8 +402,7 @@ void MainWindow::exportSelectedGraph() {
     if (ui->customPlot->selectedGraphs().size() > 0)
     {
 
-        QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", ui->customPlot->selectedGraphs().first()->name(), "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
-        QFile data(filename);
+        QFile data(exportDestination+"/"+ui->customPlot->selectedGraphs().first()->name()+".csv");
         if(data.open(QFile::WriteOnly |QFile::Truncate))
         {
             QTextStream output(&data);
@@ -674,10 +684,11 @@ void MainWindow::preParse() {
     if (ui->toolBox2->currentIndex() == 1) {
         QTimer::singleShot(samples*1000/sampleRate, this, SLOT(CVparseAndPlot()));  //Cylic Voltammetry
     }
-    else if (waveNum == 2 && ui->toolBox2->currentIndex()==0) {    //Anodic Stripping, triangle wave
+    else if (waveNum == 1 && ui->toolBox2->currentIndex()==0) {    //Anodic Stripping, triangle wave
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(CVparseAndPlot()));
         timer->start(samples*1000/sampleRate);
+        count = 0;
 
     }
     else if (ui->toolBox2->currentIndex()==2) {                    // Potentiostatic Amperometry
@@ -842,8 +853,6 @@ void MainWindow::parseAndPlot() {
 
     for (quint32 i = 0; i<samples; i++) {
 
-
-
         inByteArray = serial.readLine();
         y = inByteArray.toDouble();
         xValues[i] = x;
@@ -866,8 +875,6 @@ void MainWindow::parseAndPlot() {
     ui->customPlot->graph()->setData(xValues, yValues);
     ui->customPlot->graph()->setVisible(false);
 
-
-
     ui->customPlot->replot();
 
     ui->statusBar->showMessage(QString("Sampling Done!"));
@@ -886,17 +893,17 @@ void MainWindow::showRawData() {
 void MainWindow::CVparseAndPlot()
 {
     QString inByteArray;
-    QPen pen;
 
     double voltMark;
     double y = 0;
 
-
     if ((ui->toolBox2->currentIndex() == 1) ) {
         ui->customPlot->xAxis->setRange(ui->CVstartVolt->value()*1.1, ui->CVpeakVolt->value()*1.1);
+        ui->customPlot->replot();
     }
     else if(ui->toolBox2->currentIndex() == 0) {
         ui->customPlot->xAxis->setRange(ui->ASstartVolt->value()*1.1, ui->ASpeakVolt->value()*1.1);
+        ui->customPlot->replot();
     }
 
 
@@ -909,8 +916,6 @@ void MainWindow::CVparseAndPlot()
         inByteArray = serial.readLine();
         voltMark = inByteArray.toDouble();
         xValuesUp[i] = voltMark;
-
-
         yValuesUp[i] = y;
     }
 
@@ -921,8 +926,6 @@ void MainWindow::CVparseAndPlot()
     ui->customPlot->graph()->setData(xValuesUp, yValuesUp);
 
     QCPScatterStyle scatterVolt;
-
-
     scatterVolt.setPen(QColor(sin(randomColorNumber*0.3)*100+100, sin(randomColorNumber*0.6+0.7)*100+100, sin(randomColorNumber*0.4+0.6)*100+100));
     scatterVolt.setShape(QCPScatterStyle::ssCircle);
     scatterVolt.setSize(0.5);
@@ -938,7 +941,7 @@ void MainWindow::CVparseAndPlot()
         this->setCursor(QCursor(Qt::ArrowCursor));
     }
 
-    if (count >= ui->ASiterations->value() && waveNum == 2 && ui->toolBox2->currentIndex()==0) {
+    if (count >= ui->ASiterations->value() && waveNum == 1 && ui->toolBox2->currentIndex()==0) {
         count = 0;
         timer->stop();
         ui->statusBar->showMessage(QString("Sampling Done!"));
@@ -1028,37 +1031,45 @@ void MainWindow::statsCheck() {
                     qSort(steadyStateY.begin(), steadyStateY.end());
                     float localMin = yValues[0];
 
-                    if(steadyStateBracketMade) {
-                        return;
-                    }
+
                     //This is the steady state assumption controller
                     //if the linear regression estimate of the slope is smaller than the user defined limit,
                     //and there is 5 seconds of sample data following, steady state has been reached
                     if (qAbs(estimatedSlope) <= steadyStateValue && (1000*sampleNumber/sampleRate - k.value().key) >= steadyStateLength) {
-                        QCPItemBracket *steadyBracket = new QCPItemBracket(ui->customPlot);
-                        steadyStateBracket = steadyBracket;
-                        steadyStateBracket->setStyle(QCPItemBracket::bsSquare);
 
-                        //build bracket above steady state
-                        steadyStateBracketPen.setWidthF(1.5);
-                        steadyStateBracketPen.setColor(QColor(168,182,120));
-                        steadyStateBracket->setPen(steadyStateBracketPen);
-                        ui->customPlot->addItem(steadyStateBracket);
-                        steadyStateBracket->left->setCoords(k.value().key+steadyStateLength, localMin);
-                        steadyStateBracket->right->setCoords(k.value().key, localMin);
-
-                        float steadyStateSum;
+                        float steadyStateXSum = 0;
+                        float steadyStateYSum = 0;
+                        float varianceAddition = 0;
                         for (int i = 0; i < steadyStateLength*sampleRate/1000; i++){
-                            steadyStateSum += k.value().value;
+                            steadyStateXSum += k.value().key;
+                            steadyStateYSum += k.value().value;
                             ++k;
                         }
 
-                        float stdyStateMean = steadyStateSum/steadyStateLength*sampleRate/1000;
-                        ui->steadyStateMeanLabel->setText(QString("%1").arg(stdyStateMean));
+                        k = k - steadyStateLength*sampleRate/1000;
+
+                        float steadyStateTrueSumNumer = 0;
+                        float steadyStateTrueSumDenom = 0;
+                        float steadyStateXMean = steadyStateXSum/(steadyStateLength*sampleRate/1000.0);
+                        float steadyStateYMean = steadyStateYSum/(steadyStateLength*sampleRate/1000.0);
+
+                        for (int i = 0; i < steadyStateLength*sampleRate/1000; i++){
+                            varianceAddition += qPow((k.value().value-steadyStateYMean),2);
+                            steadyStateTrueSumNumer += (k.value().key - steadyStateXMean)*(k.value().value-steadyStateYMean);
+                            steadyStateTrueSumDenom += qPow((k.value().key-steadyStateXMean),2);
+                            ++k;
+                        }
+
+                        float steadyStateVariance = varianceAddition/(steadyStateLength*sampleRate/1000);
+                        float sDeviation = qSqrt(steadyStateVariance);
+                        float steadyStateSlope = steadyStateSumNumer/steadyStateSumDenom;
+                        ui->steadyStateSlopeLabel->setText(QString("%1").arg(steadyStateSlope));
+                        ui->steadyStateMeanLabel->setText(QString("%1").arg(steadyStateYMean));
+                        ui->steadyStateSDeviationLabel->setText(QString("%1").arg(sDeviation));
+
 
                         ui->customPlot->replot();
-                        ui->statusBar->showMessage(QString("Steady State Reached!"));
-                        steadyStateBracketMade = true;
+                        ui->steadyStateLabel->setText(QString("Steady State Deteced"));
                         return;
 
                     }
@@ -1131,8 +1142,8 @@ void MainWindow::statsUpdate()
         float variance = varianceAddition/counter;
         float sDeviation = qSqrt(variance);
 
-        ui->minLabel->setText(QString("%1").arg(min));
-        ui->maxLabel->setText(QString("%1").arg(max));
+        ui->minMaxLabel->setText(QString("%1, %2").arg(min).arg(max));
+        //ui->maxLabel->setText(QString("%1").arg(max));
         ui->meanLabel->setText(QString("%1").arg(mean));
         ui->sDeviationLabel->setText(QString("+/-  %1").arg(sDeviation));
 
@@ -1167,9 +1178,6 @@ void MainWindow::brushUpdate(int startPosition) {
         ui->customPlot->replot();
     }
 }
-
-
-
 
 
 /*************************************************************************************************************/
@@ -1270,10 +1278,6 @@ void MainWindow::clearAllSelected()
         selectionBracketMade = false;
 
     }
-    if (steadyStateBracketMade) {
-        ui->customPlot->removeItem(steadyStateBracket);
-        steadyStateBracketMade = false;
-    }
 
 }
 
@@ -1287,6 +1291,8 @@ void MainWindow::res10ASelected()
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
     ui->customPlot->yAxis->setRange(-100,100);
+    resolutionText->setText("Resolution: +/- 100 µA");
+    resolutionText->position->setCoords(0, 105);
     ui->customPlot->replot();
 
 
@@ -1301,6 +1307,8 @@ void MainWindow::res1000nASelected()
     ui->customPlot->xAxis->setLabel("Milliseconds (ms)");
     ui->customPlot->yAxis->setLabel("Microamps (µA)");
     ui->customPlot->yAxis->setRange(-10,10);
+    resolutionText->position->setCoords(0, 10.5);
+    resolutionText->setText("Resolution: +/- 10 µA");
     ui->customPlot->replot();
 }
 
@@ -1312,6 +1320,8 @@ void MainWindow::res100nASelected()
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
     ui->customPlot->yAxis->setRange(-1000,1000);
+    resolutionText->setText("Resolution: +/- 1000 nA");
+    resolutionText->position->setCoords(0, 1020);
     ui->customPlot->replot();
 }
 
@@ -1323,6 +1333,8 @@ void MainWindow::res10nASelected()
     clearAllSelected();
     ui->customPlot->yAxis->setLabel("Nanoamps (nA)");
     ui->customPlot->yAxis->setRange(-100,100);
+    resolutionText->setText("Resolution: +/- 100 nA");
+    resolutionText->position->setCoords(0, 105);
     ui->customPlot->replot();
 }
 
