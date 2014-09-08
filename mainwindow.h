@@ -81,6 +81,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QString teensyPort;
+    QCPItemText *resolutionText;
     QString exportDestination;
     QStringList everythingAvail;
     quint32 samples;
@@ -111,6 +112,8 @@ private:
     bool selectionBracketMade;
     bool steadyStateBracketMade;
     QPen selectionBracketPen;
+
+
 
 
 };
