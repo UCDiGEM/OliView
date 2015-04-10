@@ -13,13 +13,16 @@ TEMPLATE = app
 SOURCES += main.cpp\
            mainwindow.cpp \
          qcustomplot.cpp \
-biquad.cpp
+biquad.cpp \
+    calibration.cpp
 
 HEADERS  += mainwindow.h \
          qcustomplot.h \
-        biquad.h
+        biquad.h \
+    calibration.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    calibration.ui
 
 RC_ICONS = Icon.ico
     
